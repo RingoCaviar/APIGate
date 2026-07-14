@@ -1,0 +1,40 @@
+services:
+  app12003:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: feiniu-12003-local
+    ports:
+      - "12003:12003"
+    environment:
+      PORT: 12003
+      APP_PUBLIC_BASE: http://localhost:12003
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-now}
+      INVITE_CODE: ${INVITE_CODE:-CHANGE_ME_INVITE_CODE}
+      DATA_DIR: /app/runtime/data
+      LOG_DIR: /app/runtime/logs
+      UPLOADS_DIR: /app/runtime/uploads
+      RESULTS_DIR: /app/runtime/results
+      ARCHIVE_BASE: /app/runtime/archive
+    volumes:
+      - ./runtime:/app/runtime
+    restart: unless-stopped
+
+  app12004:
+    image: node:20-alpine
+    container_name: feiniu-12004-local
+    working_dir: /app
+    command: ["node", "query-server.js"]
+    ports:
+      - "12004:12004"
+    environment:
+      IO_DATA_DIR: /app/runtime/data
+      IO_LOG_DIR: /app/runtime/logs
+      APP_12003_BASE_URL: http://app12003:12003
+    volumes:
+      - ./:/app
+      - ./runtime:/app/runtime
+    depends_on:
+      - app12003
+    restart: unless-stopped

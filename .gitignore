@@ -1,0 +1,22 @@
+# 运行时数据目录（含用户数据、日志、上传文件等）
+runtime/data/
+runtime/logs/
+runtime/uploads/
+runtime/results/
+runtime/archive/
+
+# 环境变量（含密钥，不提交）
+.env
+
+# Node.js 依赖
+node_modules/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo

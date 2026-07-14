@@ -1,0 +1,2491 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>益菲AI作图-局域网版</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#0a0a0f; --bg2:#12121a; --bg3:#1a1a26; --bg4:#222233;
+      --border:#2a2a3a; --text:#e8e8f0; --text2:#8888a0;
+      --accent:#6366f1; --success:#22c55e; --danger:#ef4444; --warn:#f59e0b;
+      --gradient:linear-gradient(135deg,#6366f1,#8b5cf6);
+    }
+    body { font-family:-apple-system,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; }
+
+    .auth-wrap { display:flex; align-items:center; justify-content:center; height:100vh; background:var(--bg); }
+    .auth-card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:40px; width:380px; }
+    .auth-card h1 { font-size:24px; text-align:center; margin-bottom:8px; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .auth-card .sub { text-align:center; color:var(--text2); font-size:13px; margin-bottom:28px; }
+    .auth-card .field { margin-bottom:16px; }
+    .auth-card label { display:block; font-size:12px; color:var(--text2); margin-bottom:6px; }
+    .auth-card input { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text); font-size:14px; outline:none; }
+    .auth-card input:focus { border-color:var(--accent); }
+    .auth-btn { width:100%; padding:12px; background:var(--gradient); border:none; border-radius:8px; color:white; font-size:15px; font-weight:600; cursor:pointer; margin-top:8px; }
+    .auth-btn:hover { opacity:0.9; }
+    .auth-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .auth-link { text-align:center; margin-top:16px; font-size:13px; color:var(--text2); }
+    .auth-link a { color:var(--accent); cursor:pointer; text-decoration:none; }
+    .auth-link a:hover { text-decoration:underline; }
+    .auth-error { background:rgba(239,68,68,0.1); border:1px solid var(--danger); border-radius:8px; padding:10px; font-size:13px; color:#fca5a5; margin-bottom:16px; text-align:center; display:none; }
+    .auth-success { background:rgba(34,197,94,0.1); border:1px solid var(--success); border-radius:8px; padding:10px; font-size:13px; color:#86efac; margin-bottom:16px; text-align:center; display:none; }
+
+    .app { display:grid; grid-template-columns:280px 1fr 300px; height:100vh; overflow:hidden; }
+    .app.hidden { display:none; }
+
+    .left { background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0; overflow-y:auto; overflow-x:hidden; }
+    .left::-webkit-scrollbar { width:6px; }
+    .left::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+    .ptitle { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .ptitle .uname { color:var(--accent); text-transform:none; letter-spacing:0; font-size:14px; font-weight:700; }
+    .psection { padding:14px 18px; border-bottom:1px solid var(--border); }
+    .plabel { font-size:11px; color:var(--text2); margin-bottom:6px; font-weight:500; text-transform:uppercase; }
+    .pinput { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
+    .pinput:focus { border-color:var(--accent); }
+    textarea.pinput { min-height:140px; resize:vertical; line-height:1.6; }
+    select.pinput { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238888a0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; }
+    /* Mode toggle */
+    .mode-toggle { display:flex; gap:6px; }
+    .mode-btn { flex:1; padding:8px 12px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text2); font-size:13px; cursor:pointer; transition:all .15s; text-align:center; }
+    .mode-btn:hover { border-color:var(--accent); }
+    .mode-btn.active { background:var(--accent); border-color:var(--accent); color:white; font-weight:600; }
+
+    .qbtns { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+    .qbtns .qbtn { transition:all .15s; }
+    .qbtns .qbtn:hover { transform:translateX(3px); }
+    .qbtn { padding:4px 9px; background:var(--bg3); border:1px solid var(--border); border-radius:6px; color:var(--text2); font-size:11px; cursor:pointer; }
+    .qbtn:hover { background:var(--accent); color:white; border-color:var(--accent); }
+
+    .logout-btn { margin:14px 18px; padding:10px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text2); font-size:13px; cursor:pointer; text-align:center; }
+    .logout-btn:hover { border-color:var(--danger); color:var(--danger); }
+
+    .main { display:flex; flex-direction:column; background:var(--bg); min-height:0; overflow:hidden; }
+    .chat-head { position:relative; min-height:78px; padding:14px 20px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(26,26,38,.96),var(--bg2)); display:flex; align-items:center; justify-content:space-between; }
+    .chat-title { min-width:220px; }
+    .chat-head h1 { font-size:16px; font-weight:600; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .chat-head small { font-size:11px; color:var(--text2); }
+    .feature-nav { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; gap:10px; padding:6px; border:1px solid rgba(255,255,255,.08); border-radius:14px; background:rgba(10,10,15,.42); box-shadow:0 14px 36px rgba(0,0,0,.28); backdrop-filter:blur(12px); }
+    .feature-nav { display:none; }
+    .cbtn { padding:5px 12px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text2); font-size:12px; cursor:pointer; }
+    .cbtn:hover { border-color:var(--danger); color:var(--danger); }
+
+    .msgs { flex:1; overflow-y:auto; padding:20px; min-height:0; overscroll-behavior:contain; }
+    .msgs::-webkit-scrollbar { width:5px; }
+    .msgs::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+    .msg { margin-bottom:18px; display:flex; gap:10px; animation:fade .3s; }
+    @keyframes fade { from { opacity:0; transform:translateY(6px); } }
+    /* AI message - left aligned */
+    .msg.ai { justify-content:flex-start; }
+    .msg.ai .mav { background:var(--bg3); border:1px solid var(--border); }
+    /* User message - right aligned */
+    .msg.user { justify-content:flex-start; }
+    .msg.user .mav { visibility:hidden; }
+    .msg.user .mbody { max-width:75%; min-width:0; overflow:hidden; display:flex; flex-direction:column; align-items:flex-end; margin-left:auto; }
+    .msg.user .mrole { text-align:right; }
+    .msg.user .mimgs { justify-content:flex-end; }
+
+    .mav { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+    .mbody { flex:1; max-width:70%; min-width:0; overflow:hidden; }
+    .mrole { font-size:11px; color:var(--text2); margin-bottom:3px; font-weight:500; }
+    .mtext { font-size:14px; line-height:1.7; word-break:break-word; }
+    /* User bubble */
+    .msg.user .mtext { background:var(--gradient); border-radius:16px 16px 4px 16px; padding:10px 14px; display:inline-block; max-width:100%; color:#fff; }
+    /* AI bubble */
+    .msg.ai .mtext { display:inline-block; max-width:100%; background:var(--bg3); border-radius:16px 16px 16px 4px; padding:10px 14px; }
+
+    .mimgs { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .mimgs img { max-width:220px; max-height:180px; border-radius:8px; border:1px solid var(--border); object-fit:cover; }
+
+    .gimg { margin-top:10px; display:flex; flex-direction:column; }
+    .gimg img { max-width:100%; max-height:320px; width:auto; height:auto; border-radius:12px; border:1px solid var(--border); object-fit:contain; }
+    .gact { display:flex; gap:6px; margin-top:6px; justify-content:flex-start; }
+    .gbtn { padding:5px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:6px; color:var(--text2); font-size:11px; cursor:pointer; }
+    .gbtn:hover { color:var(--text); border-color:var(--accent); }
+
+    .ia { padding:14px 20px 18px; border-top:1px solid var(--border); background:var(--bg2); flex-shrink:0; position:sticky; bottom:0; z-index:10; }
+    .uploads { display:flex; gap:10px; margin-bottom:10px; }
+    .ubox { flex:1; border:2px dashed var(--border); border-radius:10px; padding:12px; text-align:center; cursor:pointer; position:relative; min-height:100px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .ubox:hover { border-color:var(--accent); }
+    .ubox.has { border-style:solid; border-color:var(--success); padding:4px; cursor:grab; }
+    .ubox.has:active { cursor:grabbing; }
+    .ubox.has img { width:100%; height:100px; object-fit:cover; border-radius:6px; }
+    .ubox.uploading { border-style:solid; border-color:var(--warn); padding:4px; }
+    .ubox.uploading img { width:100%; height:100px; object-fit:cover; border-radius:6px; opacity:0.5; }
+    .upload-badge { position:absolute; top:-6px; right:-6px; width:18px; height:18px; background:var(--warn); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:white; border:2px solid var(--bg2); }
+    .ubox .ui { font-size:24px; margin-bottom:3px; }
+    .ubox .ul { font-size:11px; color:var(--text2); }
+    .ubox input { display:none; }
+    .ubox .rm { position:absolute; top:-6px; right:-6px; width:18px; height:18px; background:var(--danger); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:white; border:2px solid var(--bg2); cursor:pointer; }
+    .ubox .ub-fn { font-size:10px; color:var(--text2); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 2px; }
+    .ubox .ub-fn { font-size:10px; color:var(--text2); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 2px; }
+    .ubox:hover .ub-overlay { opacity:1; }
+    .ub-overlay { position:absolute; inset:0; display:flex; justify-content:center; align-items:center; gap:6px; opacity:0; transition:opacity .15s; background:rgba(0,0,0,0.4); border-radius:8px; pointer-events:none; }
+    .ub-overlay * { pointer-events:auto; }
+    .ub-upload-btn { width:28px; height:28px; background:var(--accent); border:none; border-radius:50%; color:white; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .ub-upload-btn:hover { background:#818cf8; }
+    .ub-drag-hint { width:28px; height:28px; background:rgba(255,255,255,0.15); border:none; border-radius:6px; color:rgba(255,255,255,0.8); font-size:16px; cursor:grab; display:flex; align-items:center; justify-content:center; }
+    .ub-drag-hint:hover { background:rgba(255,255,255,0.25); }
+    .sort-btn { padding:4px 10px; background:var(--accent); border:none; border-radius:6px; color:white; font-size:11px; cursor:pointer; white-space:nowrap; transition:opacity .15s; }
+    .sort-btn:hover { opacity:0.85; }
+
+    .irow { display:flex; gap:8px; align-items:flex-end; }
+    .ci { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:12px 14px; color:var(--text); font-size:14px; outline:none; resize:none; min-height:120px; max-height:200px; font-family:inherit; line-height:1.5; }
+    .ci:focus { border-color:var(--accent); }
+    .ci::placeholder { color:var(--text2); }
+    .genbtn { padding:0 16px; height:56px; background:linear-gradient(135deg,#f59e0b,#ef4444); border:none; border-radius:10px; color:white; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; line-height:1.3; }
+    .genbtn:hover { opacity:0.9; }
+    .genbtn:disabled { opacity:0.5; cursor:not-allowed; }
+
+    /* Right Panel - Results */
+    .right { background:var(--bg2); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+    .results { flex:1; overflow-y:auto; padding:8px; min-height:0; }
+    .results::-webkit-scrollbar { width:5px; }
+    .results::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+    .rcard { background:var(--bg3); border-radius:8px; overflow:hidden; border:1px solid var(--border); margin-bottom:8px; transition: border-color 0.3s; }
+    .rcard:hover { border-color:var(--accent); }
+    .rcard.pending { border-color:var(--warn); }
+    .rcard.success { border-color:var(--success); }
+    .rcard.failed { border-color:var(--danger); }
+
+    .rcard-thumb { width:100%; aspect-ratio:1; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; background:var(--bg4); }
+    .rcard-thumb img { width:100%; height:100%; object-fit:cover; }
+
+    /* Pending state */
+    .pending-content { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; }
+    .spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--warn); border-radius:50%; animation:spin .8s linear infinite; margin-bottom:12px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .pending-label { font-size:12px; color:var(--warn); font-weight:600; margin-bottom:6px; }
+    .timer-display { font-size:22px; font-weight:700; color:var(--text); font-family:'Courier New',monospace; letter-spacing:2px; }
+    .timer-ms { font-size:13px; color:var(--text2); }
+
+    .rinfo { padding:7px 9px; }
+    .rprompt { font-size:10px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .rtime { font-size:9px; color:var(--text2); opacity:0.6; margin-top:2px; }
+    .rbtns { display:flex; gap:4px; margin-top:5px; }
+    .rbtn { padding:3px 7px; background:var(--bg4); border:none; border-radius:4px; color:var(--text2); font-size:10px; cursor:pointer; }
+    .rbtn:hover { color:var(--text); }
+    .rbtn.del:hover { background:var(--danger); color:white; }
+
+    .empty { text-align:center; padding:36px 14px; color:var(--text2); }
+    .empty .ei { font-size:36px; opacity:0.3; margin-bottom:6px; }
+    .empty p { font-size:12px; }
+
+    /* Task counter */
+    .task-count { padding:8px 12px; border-bottom:1px solid var(--border); font-size:11px; color:var(--text2); display:flex; align-items:center; gap:6px; }
+    .task-count .count { background:var(--accent); color:white; border-radius:10px; padding:1px 7px; font-size:10px; font-weight:700; }
+    .clear-done { margin-left:auto; cursor:pointer; color:var(--text2); }
+    .clear-done:hover { color:var(--danger); }
+
+    .admin-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; display:none; align-items:center; justify-content:center; }
+    .admin-overlay.show { display:flex; }
+    .admin-modal { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:32px; width:700px; max-height:80vh; overflow-y:auto; }
+    .admin-modal h2 { font-size:20px; margin-bottom:20px; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .admin-section { margin-bottom:24px; }
+    .admin-tabs { display:flex; gap:8px; margin-bottom:20px; }
+    .admin-tab { padding:8px 16px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text2); font-size:13px; cursor:pointer; }
+    .admin-tab.active { background:var(--accent); color:white; border-color:var(--accent); }
+    .pe-item { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:10px; }
+    .pe-item.new-item { border-color:var(--accent); border-style:dashed; }
+    .pe-item .pe-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .pe-item .pe-name { font-size:13px; font-weight:600; }
+    .pe-item .pe-badge { font-size:10px; padding:2px 6px; border-radius:4px; background:var(--accent); color:white; }
+    .pe-item textarea { width:100%; background:var(--bg4); border:1px solid var(--border); border-radius:6px; padding:8px; color:var(--text); font-size:12px; font-family:inherit; outline:none; resize:vertical; min-height:80px; line-height:1.5; }
+    .pe-item textarea:focus { border-color:var(--accent); }
+    .pe-item .pe-new-fields { display:flex; gap:8px; margin-bottom:8px; }
+    .pe-item .pe-new-name { flex:1; background:var(--bg4); border:1px solid var(--border); border-radius:6px; padding:6px 10px; color:var(--text); font-size:13px; font-weight:600; outline:none; }
+    .pe-item .pe-new-name:focus { border-color:var(--accent); }
+    .pe-item .pe-new-mode { width:100px; background:var(--bg4); border:1px solid var(--border); border-radius:6px; padding:6px 10px; color:var(--text); font-size:12px; outline:none; }
+    .pe-item .pe-del { padding:2px 8px; background:var(--danger); border:none; border-radius:4px; color:white; font-size:11px; cursor:pointer; margin-left:8px; }
+    .admin-section h3 { font-size:14px; color:var(--text2); margin-bottom:10px; }
+    .admin-input { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text); font-size:14px; outline:none; }
+    .admin-input:focus { border-color:var(--accent); }
+    .admin-save { padding:8px 20px; background:var(--gradient); border:none; border-radius:8px; color:white; font-size:13px; cursor:pointer; margin-top:8px; }
+    .admin-close { padding:8px 20px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text2); font-size:13px; cursor:pointer; margin-left:8px; }
+
+    .user-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .user-table th { text-align:left; padding:8px 12px; background:var(--bg3); color:var(--text2); font-weight:500; font-size:11px; text-transform:uppercase; border-bottom:1px solid var(--border); }
+    .user-table td { padding:8px 12px; border-bottom:1px solid var(--border); }
+    .user-table tr:hover td { background:var(--bg3); }
+    .user-table .role-admin { color:var(--accent); font-weight:600; }
+    .user-table .actions { display:flex; gap:4px; }
+    .user-table .act-btn { padding:3px 8px; border:none; border-radius:4px; font-size:11px; cursor:pointer; background:var(--bg4); color:var(--text2); }
+    .user-table .act-btn:hover { color:var(--text); }
+    .user-table .act-btn.danger:hover { background:var(--danger); color:white; }
+
+    .stat-badge { display:inline-block; padding:2px 8px; background:var(--bg3); border-radius:4px; font-size:12px; font-weight:600; }
+    .stat-badge.ok { color:var(--success); }
+    .badge-enabled { color:var(--success); font-weight:600; font-size:12px; }
+    .badge-disabled { color:var(--danger); font-weight:600; font-size:12px; }
+    .balance-display { font-weight:700; font-size:13px; color:var(--text); }
+    .balance-zero { color:var(--danger); }
+    .log-entry { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:8px; }
+    .log-entry .log-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .log-entry .log-time { font-size:12px; color:var(--text2); }
+    .log-entry .log-model { font-size:11px; padding:2px 6px; background:var(--accent); color:white; border-radius:4px; }
+    .log-entry .log-prompt { font-size:13px; color:var(--text); margin-bottom:6px; }
+    @media (max-width:1180px) {
+      .chat-head { align-items:flex-start; min-height:128px; }
+      .feature-nav { top:auto; bottom:12px; transform:translateX(-50%); }
+      .feature-nav { display:none; }
+    }
+    .log-entry .log-meta { font-size:11px; color:var(--text2); display:flex; gap:12px; }
+    .log-entry .log-img { max-width:120px; max-height:90px; border-radius:6px; border:1px solid var(--border); margin-top:6px; }
+
+    .typing { display:flex; gap:4px; padding:4px 0; }
+    .typing i { width:6px; height:6px; background:var(--accent); border-radius:50%; animation:ty 1.4s infinite; }
+    .typing i:nth-child(2) { animation-delay:.2s; }
+    .typing i:nth-child(3) { animation-delay:.4s; }
+    @keyframes ty { 0%,60%,100% { transform:translateY(0); opacity:.4; } 30% { transform:translateY(-5px); opacity:1; } }
+
+    .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:8px 18px; font-size:13px; z-index:999; animation:ti .3s; }
+    .toast.ok { border-color:var(--success); }
+    .toast.err { border-color:var(--danger); }
+    @keyframes ti { from { opacity:0; transform:translateX(-50%) translateY(8px); } }
+  </style>
+</head>
+<body>
+
+<!-- Auth: Login -->
+<div class="auth-wrap" id="loginPage">
+  <div class="auth-card">
+    <h1>✨ AI 图片优化</h1>
+    <p class="sub">登录你的账户开始使用</p>
+    <div class="auth-error" id="loginErr"></div>
+    <div class="field"><label>用户名</label><input id="loginUser" placeholder="输入用户名" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="field"><label>密码</label><input id="loginPass" type="password" placeholder="输入密码" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="auth-btn" id="loginBtn" onclick="doLogin()">登 录</button>
+    <div class="auth-link">还没有账户?<a onclick="showRegister()">立即注册</a></div>
+  </div>
+</div>
+
+<!-- Auth: Register -->
+<div class="auth-wrap" id="registerPage" style="display:none">
+  <div class="auth-card">
+    <h1>✨ 注册账户</h1>
+    <p class="sub">输入邀请码创建你的账户</p>
+    <div class="auth-error" id="regErr"></div>
+    <div class="auth-success" id="regOk"></div>
+    <div class="field"><label>用户名</label><input id="regUser" placeholder="2-20个字符" onkeydown="if(event.key==='Enter')doRegister()"></div>
+    <div class="field"><label>密码</label><input id="regPass" type="password" placeholder="至少4个字符" onkeydown="if(event.key==='Enter')doRegister()"></div>
+    <div class="field"><label>邀请码</label><input id="regCode" placeholder="输入邀请码" onkeydown="if(event.key==='Enter')doRegister()"></div>
+    <button class="auth-btn" onclick="doRegister()">注 册</button>
+    <div class="auth-link">已有账户?<a onclick="showLogin()">返回登录</a></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="app hidden" id="mainApp">
+  <div class="left">
+    <div class="ptitle" id="balanceSection">
+      <span class="uname" id="displayName"></span>
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <span id="balanceDisplay" style="font-size:15px;font-weight:700;color:var(--success);white-space:nowrap;">￥0.00</span>
+        <span id="statusBadge" style="font-size:11px;padding:2px 8px;border-radius:999px;background:var(--bg3);color:var(--text2);white-space:nowrap;">--</span>
+      </div>
+    </div>
+    <!-- 图生图/文生图 模式切换 -->
+    <div class="psection">
+      <div class="plabel">作图模式</div>
+      <div class="mode-toggle" id="modeToggle">
+        <button class="mode-btn active" data-mode="img2img" onclick="switchMode('img2img')">🖼️ 图生图</button>
+        <button class="mode-btn" data-mode="txt2img" onclick="switchMode('txt2img')">✨ 文生图</button>
+      </div>
+    </div>
+    <!-- 文生图额外设置 -->
+    <div class="psection" id="txt2imgSettings" style="display:none">
+      <div class="plabel">输出格式</div>
+      <select class="pinput" id="outputFormatSelect" onchange="updatePriceLabel()">
+        <option value="png">PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="webp">WebP</option>
+      </select>
+      <div style="font-size:11px;color:var(--text2);margin-top:6px;">文生图支持 Sub2、6789、贞贞、漫小白、Agnes，按当前选择模型计费</div>
+    </div>
+    <div class="psection" id="modelSection">
+      <div class="plabel">选择模型</div>
+      <select class="pinput" id="modelSelect" onchange="updatePriceLabel(); loadTodayStats()">
+        <option value="gpt-image-2-sub2" selected>gpt-image-2-Sub2接口</option>
+        <option value="gpt-image-2">gpt-image-2-贞贞接口(异步)</option>
+        <option value="gpt-image-2-flatfee">gpt-image-2-6789接口</option>
+        <option value="gpt-image-2-manxiaobai">gpt-image-2-漫小白接口</option>
+        <option value="agnes-image-2.1-flash">agnes-image-2.1-flash-Agnes接口</option>
+      </select>
+      <!-- 今日接口统计 -->
+      <div id="todayStats" style="margin-top:10px; display:grid; grid-template-columns:repeat(3,1fr); gap:6px;">
+        <div style="padding:8px 8px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:10px; color:#94a3b8; display:flex; flex-direction:column; gap:4px; min-width:0;">
+          <span>📊 今日使用张数</span>
+          <b id="statTotal" style="color:#e2e8f0; font-size:14px; line-height:1;">0</b>
+        </div>
+        <div style="padding:8px 8px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:10px; color:#94a3b8; display:flex; flex-direction:column; gap:4px; min-width:0;">
+          <span>✅ 今日总成功率</span>
+          <b id="statRate" style="color:#4ade80; font-size:14px; line-height:1;">0%</b>
+        </div>
+        <div style="padding:8px 8px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:10px; color:#94a3b8; display:flex; flex-direction:column; gap:4px; min-width:0;">
+          <span>🎯 最近10条成功率</span>
+          <b id="statCompletedRate" style="color:#22c55e; font-size:14px; line-height:1;">0%</b>
+        </div>
+        <div style="padding:8px 8px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:10px; color:#94a3b8; display:flex; flex-direction:column; gap:4px; min-width:0;">
+          <span>⏱️ 平均生成时长</span>
+          <b id="statDuration" style="color:#fbbf24; font-size:14px; line-height:1;">0s</b>
+        </div>
+        <div style="padding:8px 8px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:10px; color:#94a3b8; display:flex; flex-direction:column; gap:4px; min-width:0;">
+          <span>⚙️ 正在生成</span>
+          <b id="statRunning" style="color:#60a5fa; font-size:14px; line-height:1;">0</b>
+        </div>
+        <div style="padding:8px 8px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:10px; color:#94a3b8; display:flex; flex-direction:column; gap:4px; min-width:0;">
+          <span>⏳ 排队中</span>
+          <b id="statQueued" style="color:#f97316; font-size:14px; line-height:1;">0</b>
+        </div>
+      </div>
+    </div>
+    <div class="psection">
+      <div class="plabel">图片尺寸</div>
+      <select class="pinput" id="sizeSelect" onchange="updatePriceLabel()">
+        <option value="auto">自动 (auto)</option>
+        <option value="1024x1024">1024 × 1024 · 1K · 1:1 方图</option>
+        <option value="1024x576">1024 × 576 · 1K · 16:9 横图</option>
+        <option value="576x1024">576 × 1024 · 1K · 9:16 竖图</option>
+        <option value="1008x1344">1008 × 1344 · 1K · 3:4 竖图</option>
+        <option value="1024x768">1024 × 768 · 1K · 4:3 横图</option>
+        <option value="1440x1440">1440 × 1440 · 1.4K · 1:1 方图</option>
+        <option value="1440x1920">1440 × 1920 · 1.4K · 3:4 竖图</option>
+        <option value="1152x2048">1152 × 2048 · 2K · 9:16 竖图</option>
+        <option value="1536x2048">1536 × 2048 · 2K · 3:4 竖图</option>
+        <option value="2048x1536">2048 × 1536 · 2K · 4:3 横图</option>
+        <option value="2048x2048">2048 × 2048 · 2K · 1:1 方图</option>
+        <option value="2048x1152">2048 × 1152 · 2K · 16:9 横图</option>
+        <option value="3840x2160">3840 × 2160 · 4K · 16:9 横图</option>
+        <option value="2160x3840">2160 × 3840 · 4K · 9:16 竖图</option>
+      </select>
+    </div>
+    <div class="psection">
+      <div class="plabel">画质</div>
+      <select class="pinput" id="qualitySelect">
+        <option value="high">高 (high)</option>
+        <option value="auto">自动 (auto)</option>
+        <option value="medium">中 (medium)</option>
+        <option value="low">低 (low)</option>
+      </select>
+    </div>
+    <div class="psection" id="promptSection">
+      <div class="plabel">快捷提示词</div>
+      <div class="qbtns" style="flex-direction:column;gap:4px;" id="promptBtns">
+        <div style="color:var(--text2);font-size:11px;">加载中...</div>
+      </div>
+    </div>
+    <div id="adminBtnWrap" style="display:none"><div class="psection"><div class="plabel">管理员</div><button class="qbtn" onclick="openAdmin()" style="width:100%;padding:8px;font-size:12px;">📊 管理后台</button></div></div>
+    <div style="flex:1"></div>
+    <div class="logout-btn" onclick="doLogout()">退出登录</div>
+  </div>
+
+  <div class="main">
+    <div class="chat-head">
+      <div class="chat-title">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <h1 style="margin:0;">✨ 益菲AI作图-局域网版</h1>
+          <span style="font-size:11px;padding:2px 6px;background:var(--bg3);border-radius:4px;">局域网版</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:4px;">
+          <small>上传参考图,AI 帮你优化生成</small>
+        </div>
+      </div>
+      <button class="cbtn" onclick="clearChat()">清空对话</button>
+    </div>
+    <div class="msgs" id="msgs">
+      <div class="msg ai"><div class="mav">✨</div><div class="mbody"><div class="mrole">AI 助手</div><div class="mtext">你好!我是你的 AI 图片优化助手 👋<br><br>📷 上传参考图(最多5张)<br>✏️ 描述你想要的优化效果<br>🎨 点击「生成图片」即可生成<br><br>💡 <b>支持多任务并发生成</b>,无需等待上一个完成即可开始下一个。</div></div></div>
+    </div>
+    <div class="ia">
+      <div class="uploads" id="uploadSection" style="flex-wrap:wrap;gap:8px;">
+        <div class="ubox" id="ub1" style="flex:1 1 100px;"><input type="file" id="f1" accept="image/*" onchange="onUpload(this,1)"><div class="ub-overlay"><button class="ub-upload-btn" onclick="event.stopPropagation();document.getElementById('f1').click()" title="上传">⬆</button><button class="ub-drag-hint" title="拖拽排序">⠿</button></div><div id="uc1"><div class="ui">📷</div><div class="ul">产品图</div></div></div>
+        <div class="ubox" id="ub2" style="flex:1 1 100px;"><input type="file" id="f2" accept="image/*" onchange="onUpload(this,2)"><div class="ub-overlay"><button class="ub-upload-btn" onclick="event.stopPropagation();document.getElementById('f2').click()" title="上传">⬆</button><button class="ub-drag-hint" title="拖拽排序">⠿</button></div><div id="uc2"><div class="ui">🎨</div><div class="ul">参考图</div></div></div>
+        <div class="ubox" id="ub3" style="flex:1 1 100px;"><input type="file" id="f3" accept="image/*" onchange="onUpload(this,3)"><div class="ub-overlay"><button class="ub-upload-btn" onclick="event.stopPropagation();document.getElementById('f3').click()" title="上传">⬆</button><button class="ub-drag-hint" title="拖拽排序">⠿</button></div><div id="uc3"><div class="ui">🖼️</div><div class="ul">图片3</div></div></div>
+        <div class="ubox" id="ub4" style="flex:1 1 100px;"><input type="file" id="f4" accept="image/*" onchange="onUpload(this,4)"><div class="ub-overlay"><button class="ub-upload-btn" onclick="event.stopPropagation();document.getElementById('f4').click()" title="上传">⬆</button><button class="ub-drag-hint" title="拖拽排序">⠿</button></div><div id="uc4"><div class="ui">🖼️</div><div class="ul">图片4</div></div></div>
+        <div class="ubox" id="ub5" style="flex:1 1 100px;"><input type="file" id="f5" accept="image/*" onchange="onUpload(this,5)"><div class="ub-overlay"><button class="ub-upload-btn" onclick="event.stopPropagation();document.getElementById('f5').click()" title="上传">⬆</button><button class="ub-drag-hint" title="拖拽排序">⠿</button></div><div id="uc5"><div class="ui">🖼️</div><div class="ul">图片5</div></div></div>
+      </div>
+      <div class="irow">
+        <textarea class="ci" id="chatInput" placeholder="描述你想要的优化效果..." rows="1" onkeydown="onKey(event)"></textarea>
+        <button class="genbtn" onclick="generate()">🎨 生成图片<br><span id="priceLabel" style="font-size:10px;opacity:0.9;">¥0.035/次</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="ptitle"><span>🖼️</span> 生成结果</div>
+    <div class="task-count" id="taskCount" style="display:none">
+      进行中 <span class="count" id="taskPending">0</span>
+      &nbsp;·&nbsp; 已完成 <span class="count" id="taskDone">0</span>
+      <span class="clear-done" onclick="clearDoneTasks()" title="清除已完成">🗑️ 清除已完成</span>
+    </div>
+    <div class="results" id="results">
+      <div class="empty"><div class="ei">🖼️</div><p>生成的图片会显示在这里</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Modal -->
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-modal">
+    <h2>📊 管理后台</h2>
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchAdminTab('users')">💰 账户管理</button>
+      <button class="admin-tab" onclick="switchAdminTab('prompts')">✏️ 提示词模板</button>
+      <button class="admin-tab" onclick="switchAdminTab('apikey')">🔑 API Key</button>
+      <button class="admin-tab" onclick="switchAdminTab('zhenzhen')">🔐 贞贞令牌</button>
+      <button class="admin-tab" onclick="switchAdminTab('manxiaobai')">🎨 漫小白令牌</button>
+      <button class="admin-tab" onclick="switchAdminTab('sub2')">🔐 Sub2令牌</button>
+      <button class="admin-tab" onclick="switchAdminTab('agnes')">⚡ Agnes令牌</button>
+    </div>
+    <div id="tabUsers">
+      <div class="admin-section"><h3>💰 账户管理</h3>
+        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
+          <button class="admin-save" onclick="showAddUserModal()">➕ 新增账户</button>
+          <input class="admin-input" id="userSearchInput" type="text" placeholder="🔍 搜索用户名/余额" oninput="filterUsers()" style="max-width:280px;margin-left:auto;">
+        </div>
+        <table class="user-table"><thead><tr><th>用户名</th><th>状态</th><th>余额</th><th>调用</th><th>成功</th><th>累计消耗</th><th>最近调用</th><th>操作</th></tr></thead><tbody id="userTableBody"></tbody></table>
+      </div>
+    </div>
+    <div id="tabPrompts" style="display:none">
+      <div class="admin-section">
+        <h3>✏️ 提示词模板 <span style="font-size:12px;color:var(--text2);font-weight:400;">(修改后全局同步生效)</span></h3>
+        <div id="promptEditList"></div>
+        <button class="admin-save" onclick="saveAdminPrompts()">💾 保存全部</button>
+        <button class="admin-close" onclick="resetPromptsDefault()" style="margin-left:8px;">🔄 恢复默认</button>
+        <button class="admin-close" onclick="addPromptTemplate()" style="margin-left:8px;">➕ 新增提示词</button>
+      </div>
+    </div>
+    <div id="tabApikey" style="display:none">
+      <div class="admin-section"><h3>🔑 API Key 配置</h3>
+        <input class="admin-input" id="adminApiKey" type="password" placeholder="输入 API Key">
+        <br><button class="admin-save" onclick="saveApiKey()">保存 API Key</button>
+      </div>
+    </div>
+    <div id="tabZhenzhen" style="display:none">
+      <div class="admin-section"><h3>🔐 贞贞令牌配置</h3>
+        <input class="admin-input" id="adminZhenzhenApiKey" type="password" placeholder="输入贞贞令牌">
+        <br><button class="admin-save" onclick="saveZhenzhenApiKey()">保存贞贞令牌</button>
+      </div>
+    </div>
+    <div id="tabManxiaobai" style="display:none">
+      <div class="admin-section"><h3>🎨 漫小白令牌配置</h3>
+        <input class="admin-input" id="adminManxiaobaiApiKey" type="password" placeholder="输入漫小白令牌">
+        <br><button class="admin-save" onclick="saveManxiaobaiApiKey()">保存漫小白令牌</button>
+      </div>
+    </div>
+    <div id="tabSub2" style="display:none">
+      <div class="admin-section"><h3>🔐 Sub2令牌配置</h3>
+        <input class="admin-input" id="adminSub2ApiKey" type="password" placeholder="输入Sub2令牌">
+        <br><button class="admin-save" onclick="saveSub2ApiKey()">保存Sub2令牌</button>
+      </div>
+      <div class="admin-section"><h3>🚦 Sub2排队并发</h3>
+        <input class="admin-input" id="adminSub2MaxConcurrent" type="number" min="1" max="20" step="1" placeholder="默认3">
+        <input class="admin-input" id="adminSub2TimeoutSeconds" type="number" min="30" max="3600" step="10" placeholder="超时秒数，默认180" style="margin-top:8px">
+        <div class="hint" id="adminSub2QueueStatus">正在读取队列状态...</div>
+        <br><button class="admin-save" onclick="saveSub2QueueConfig()">保存队列配置</button>
+      </div>
+    </div>
+    <div id="tabAgnes" style="display:none">
+      <div class="admin-section"><h3>⚡ Agnes令牌配置</h3>
+        <textarea class="admin-input" id="adminAgnesApiKey" rows="5" placeholder="输入Agnes令牌，一行一个账号Key"></textarea>
+        <div class="hint">支持多个独立账号 Key，一行一个；后台会自动轮询并把每个 Key 控制在 18 RPM 内。</div>
+        <br><button class="admin-save" onclick="saveAgnesApiKey()">保存Agnes令牌</button>
+      </div>
+    </div>
+    <button class="admin-close" onclick="closeAdmin()">关闭</button>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="admin-overlay" id="addUserOverlay">
+  <div class="admin-modal" style="width:420px;">
+    <h2>➕ 新增账户</h2>
+    <div class="admin-section">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">用户名</label>
+      <input class="admin-input" id="addUserName" placeholder="输入用户名">
+    </div>
+    <div class="admin-section">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">密码</label>
+      <input class="admin-input" id="addUserPassword" type="password" placeholder="输入密码">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="admin-save" onclick="doAddUser()">创建</button>
+      <button class="admin-close" onclick="closeAddUserModal()">取消</button>
+    </div>
+    <div id="addUserErr" style="color:#fca5a5;font-size:13px;margin-top:12px;display:none;"></div>
+  </div>
+</div>
+
+<!-- Recharge Modal -->
+<div class="admin-overlay" id="rechargeOverlay">
+  <div class="admin-modal" style="width:420px;">
+    <h2>💰 充值</h2>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px;">为 <span id="rechargeUser" style="color:var(--accent);font-weight:600;"></span> 充值</p>
+    <div class="admin-section">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">充值金额(元)</label>
+      <input class="admin-input" id="rechargeAmount" type="number" step="0.01" placeholder="正数充值,负数扣款">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="admin-save" onclick="doRecharge()">确认充值</button>
+      <button class="admin-close" onclick="closeRechargeModal()">取消</button>
+    </div>
+    <div id="rechargeErr" style="color:#fca5a5;font-size:13px;margin-top:12px;display:none;"></div>
+  </div>
+</div>
+
+<!-- User Logs Modal -->
+<div class="admin-overlay" id="userLogsOverlay">
+  <div class="admin-modal" style="width:900px;">
+    <h2>📋 生图日志 - <span id="logsUser" style="color:var(--accent);font-weight:600;"></span></h2>
+    <div id="userLogsList" style="max-height:60vh;overflow-y:auto;"></div>
+    <button class="admin-close" onclick="closeUserLogsModal()" style="margin-top:16px;">关闭</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" style="display:none"></div>
+
+<script>
+let token = localStorage.getItem('token');
+let currentUser = null;
+let imgs = [null, null, null, null, null];
+let uploading = [false, false, false, false, false]; // per-slot upload status
+let filenames = [null, null, null, null, null]; // original filenames per slot
+let chatHistory = [];
+let tasks = {}; // pending tasks: { id, startTime, cardEl, timerInterval, prompt }
+let taskIdCounter = 0;
+let doneCount = 0;
+let promptTemplates = []; // loaded from server
+const MAX_RESULT_CARDS = 20; // 生成结果最多保留20张
+
+// 当卡片超过20张时,自动清理最旧的已完成卡片
+function trimResultCards() {
+  const cards = document.querySelectorAll('#results .rcard');
+  if (cards.length <= MAX_RESULT_CARDS) return;
+  for (let i = cards.length - 1; i >= MAX_RESULT_CARDS; i--) {
+    const card = cards[i];
+    const histId = card.dataset.histId;
+    if (histId) api('/api/task-history/' + histId, {method:'DELETE'}).catch(()=>{});
+    // 清理对应task的timer
+    Object.keys(tasks).forEach(k => { if (tasks[k].card === card) { clearInterval(tasks[k].timerInterval); delete tasks[k]; } });
+    card.remove();
+    doneCount = Math.max(0, doneCount - 1);
+  }
+  updateTaskCounts();
+}
+
+function toast(m, t='') {
+  const el = document.getElementById('toast');
+  el.textContent = m; el.className = 'toast '+t; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+function fmtUploadSize(bytes) {
+  const n = Number(bytes || 0);
+  if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(2) + 'MB';
+  if (n >= 1024) return (n / 1024).toFixed(1) + 'KB';
+  return n + 'B';
+}
+function showCompressionToast(data) {
+  const c = data && data.compression;
+  if (c && c.compressed) toast('已压缩：' + fmtUploadSize(c.originalSize) + ' → ' + fmtUploadSize(c.compressedSize), 'ok');
+}
+
+async function api(path, opts={}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const timeout = opts._timeout || (path === '/api/generate' || path === '/api/multi-angle-generate' || path === '/api/generate-txt2img' ? 900000 : 30000);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(path, { ...opts, headers: { ...headers, ...opts.headers }, signal: controller.signal });
+    const raw = await res.text();
+    let data = {};
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      const isHtml = raw.trim().startsWith('<!DOCTYPE') || raw.trim().startsWith('<html');
+      throw new Error(isHtml ? '服务返回了页面内容,接口可能未正确命中,请刷新后重试' : raw.slice(0, 200));
+    }
+    if (!res.ok) throw new Error(data.error || '请求失败');
+    return data;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function showLogin() { document.getElementById('loginPage').style.display='flex'; document.getElementById('registerPage').style.display='none'; document.getElementById('mainApp').classList.add('hidden'); }
+function showRegister() { document.getElementById('loginPage').style.display='none'; document.getElementById('registerPage').style.display='flex'; document.getElementById('mainApp').classList.add('hidden'); }
+function showApp() {
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('registerPage').style.display='none';
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('displayName').textContent = currentUser.username;
+  if (currentUser.role==='admin') document.getElementById('adminBtnWrap').style.display='block';
+  // Load balance
+  loadUserBalance();
+  // 加载今日统计
+  loadTodayStats();
+  // 清空上一个会话的残留数据
+  document.getElementById('msgs').innerHTML = '<div class="msg ai"><div class="mav">✨</div><div class="mbody"><div class="mrole">AI 助手</div><div class="mtext">你好!我是你的 AI 图片优化助手 👋<br><br>📷 上传参考图(最多5张)<br>✏️ 描述你想要的优化效果<br>🎨 点击「生成图片」即可生成<br><br>💡 <b>支持多任务并发生成</b>,无需等待上一个完成即可开始下一个。</div></div></div>';
+  document.getElementById('results').innerHTML = '<div class="empty"><div class="ei">🖼️</div><p>生成的图片会显示在这里</p></div>';
+  imgs = [null, null, null, null, null];
+  filenames = [null, null, null, null, null];
+  chatHistory = [];
+  tasks = {};
+  taskIdCounter = 0;
+  doneCount = 0;
+  updateTaskCounts();
+  loadPromptButtons();
+  loadHistory();
+  updatePriceLabel();
+  // 默认切换到图生图模式
+  switchMode('img2img');
+}
+
+async function doLogin() {
+  const u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value;
+  const errEl=document.getElementById('loginErr'); errEl.style.display='none';
+  const btn=document.getElementById('loginBtn'); btn.disabled=true; btn.textContent='登录中...';
+  try {
+    const d = await api('/api/login', { method:'POST', body:JSON.stringify({username:u,password:p}) });
+    token=d.token; localStorage.setItem('token',token);
+    currentUser={username:d.username,role:d.role}; showApp(); toast('登录成功','ok');
+  } catch(e) { errEl.textContent=e.message; errEl.style.display='block'; }
+  finally { btn.disabled=false; btn.textContent='登 录'; }
+}
+
+async function doRegister() {
+  const u=document.getElementById('regUser').value.trim(), p=document.getElementById('regPass').value, c=document.getElementById('regCode').value.trim();
+  const errEl=document.getElementById('regErr'), okEl=document.getElementById('regOk');
+  errEl.style.display='none'; okEl.style.display='none';
+  try {
+    const d = await api('/api/register', { method:'POST', body:JSON.stringify({username:u,password:p,inviteCode:c}) });
+    okEl.textContent='注册成功!正在登录...'; okEl.style.display='block';
+    token=d.token; localStorage.setItem('token',token);
+    currentUser={username:d.username,role:d.role}; setTimeout(()=>showApp(),500);
+  } catch(e) { errEl.textContent=e.message; errEl.style.display='block'; }
+}
+
+async function doLogout() { try { await api('/api/logout',{method:'POST'}); } catch(e) {} token=null; localStorage.removeItem('token'); currentUser=null; chatHistory=[]; showLogin(); toast('已退出登录'); }
+
+function formatModel(m) {
+  if (!m) return '-';
+  if (m === 'gpt-image-2') return '贞贞接口';
+  if (m === 'gpt-image-2-flatfee') return '6789接口';
+  if (m === 'gpt-image-2-manxiaobai') return '漫小白接口';
+  if (m === 'gpt-image-2-sub2') return 'Sub2接口';
+  if (m === 'agnes-image-2.1-flash') return 'Agnes接口';
+  return m;
+}
+
+function setFullImageModelOptions(selected) {
+  const modelSelect = document.getElementById('modelSelect');
+  if (!modelSelect) return;
+  const value = selected || modelSelect.value || 'gpt-image-2-sub2';
+  modelSelect.innerHTML = `
+      <option value="gpt-image-2-sub2" selected>gpt-image-2-Sub2接口</option>
+      <option value="gpt-image-2">gpt-image-2-贞贞接口(异步)</option>
+      <option value="gpt-image-2-flatfee">gpt-image-2-6789接口</option>
+      <option value="gpt-image-2-manxiaobai">gpt-image-2-漫小白接口</option>
+      <option value="agnes-image-2.1-flash">agnes-image-2.1-flash-Agnes接口</option>
+    `;
+  modelSelect.value = ['gpt-image-2-sub2','gpt-image-2','gpt-image-2-flatfee','gpt-image-2-manxiaobai','agnes-image-2.1-flash'].includes(value) ? value : 'gpt-image-2-sub2';
+  modelSelect.disabled = false;
+}
+
+async function updatePriceLabel() {
+  const m = document.getElementById('modelSelect').value;
+  const size = document.getElementById('sizeSelect').value;
+  const label = document.getElementById('priceLabel');
+  if (!label) return;
+  function manxiaobaiPriceLabel(size){
+    const match = String(size || '').match(/^(\d+)x(\d+)$/);
+    if (!match) return '¥0.066/次';
+    const maxSide = Math.max(Number(match[1]), Number(match[2]));
+    if (maxSide <= 1024) return '¥0.055/次';
+    if (maxSide <= 2048) return '¥0.066/次';
+    return '¥0.077/次';
+  }
+  const prices = { 'gpt-image-2': '¥0.054/次', 'gpt-image-2-flatfee': '¥0.0357/次', 'gpt-image-2-sub2': '¥0.025/次', 'agnes-image-2.1-flash': '¥0.01/次' };
+  label.textContent = m === 'gpt-image-2-manxiaobai' ? manxiaobaiPriceLabel(size) : (prices[m] || '¥0.0357/次');
+}
+
+async function loadTodayStats() {
+  try {
+    const m = document.getElementById('modelSelect').value;
+    const d = await api('/api/stats/today?model=' + encodeURIComponent(m));
+    document.getElementById('statTotal').textContent = d.totalCount;
+    document.getElementById('statRate').textContent = d.successRate + '%';
+    document.getElementById('statCompletedRate').textContent = (d.completedSuccessRate ?? d.successRate) + '%';
+    document.getElementById('statDuration').textContent = d.avgDuration + 's';
+    document.getElementById('statRunning').textContent = d.runningCount ?? 0;
+    document.getElementById('statQueued').textContent = d.queuedCount ?? 0;
+  } catch(e) {}
+}
+
+async function loadUserBalance() {
+  try {
+    const d = await api('/api/me');
+    const balEl = document.getElementById('balanceDisplay');
+    const statusEl = document.getElementById('statusBadge');
+    const bal = d.balance || 0;
+    balEl.textContent = '¥' + bal.toFixed(2);
+    balEl.style.color = bal > 0 ? 'var(--success)' : 'var(--danger)';
+    if (d.enabled) {
+      statusEl.textContent = '已启用';
+      statusEl.style.color = 'var(--success)';
+    } else {
+      statusEl.textContent = '已禁用';
+      statusEl.style.color = 'var(--danger)';
+    }
+  } catch(e) {}
+}
+
+async function onUpload(input,idx) {
+  const f=input.files[0]; if(!f)return;
+  const originalFilename = f.name;
+  // Show preview immediately with uploading state
+  const previewUrl = URL.createObjectURL(f);
+  const box=document.getElementById('ub'+idx), c=document.getElementById('uc'+idx);
+  box.classList.add('has');
+  box.classList.add('uploading');
+  c.innerHTML=`<img src="${previewUrl}"><div class="upload-badge" title="上传中...">⏳</div>`;
+  // Mark as uploading
+  uploading[idx-1] = true;
+  // Upload to server
+  try {
+    const formData = new FormData();
+    formData.append('image', f);
+    const headers = { 'Authorization': 'Bearer ' + token };
+    const res = await fetch('/api/upload', { method:'POST', headers, body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '上传失败');
+    if (!data.url) throw new Error('服务器异常:未返回图片URL');
+    console.log('[upload] slot '+idx+' -> '+data.url);
+    imgs[idx-1] = data.url; // Store server URL instead of base64
+    filenames[idx-1] = originalFilename; // Store original filename for sorting
+    // Upload complete - remove uploading state
+    box.classList.remove('uploading');
+    c.innerHTML=`<img src="${previewUrl}"><div class="ub-fn" title="文件名: ${originalFilename}">${originalFilename}</div><div class="rm" onclick="event.stopPropagation();rmImg(${idx})">✕</div>`;
+    if (data.compression && data.compression.compressed) showCompressionToast(data); else toast('图片上传成功','ok');
+    // Update overlay (drag hint appears)
+    updateSlotOverlay(idx);
+  } catch(e) {
+    toast('上传失败: '+e.message, 'err');
+    rmImg(idx);
+  } finally {
+    uploading[idx-1] = false;
+  }
+}
+function rmImg(idx) {
+  imgs[idx-1]=null;
+  uploading[idx-1]=false;
+  filenames[idx-1]=null;
+  const box=document.getElementById('ub'+idx), c=document.getElementById('uc'+idx);
+  box.classList.remove('has'); box.classList.remove('uploading');
+  document.getElementById('f'+idx).value='';
+  const icons=['📷','🎨','🖼️','🖼️','🖼️'];
+  const labels=['产品图','参考图','图片3','图片4','图片5'];
+  c.innerHTML=`<div class="ui">${icons[idx-1]}</div><div class="ul">${labels[idx-1]}</div>`;
+  updateSlotOverlay(idx);
+}
+
+// Extract number from filename (e.g. "img_3_preview.png" → 3)
+function extractNumber(name) {
+  if (!name) return Infinity;
+  const m = name.match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : Infinity;
+}
+
+// Re-render a single upload slot with current data
+function renderSlot(idx) {
+  const slot = idx - 1;
+  const box = document.getElementById('ub' + idx);
+  const c = document.getElementById('uc' + idx);
+  const icons = ['📷','🎨','🖼️','🖼️','🖼️'];
+  const labels = ['产品图','参考图','图片3','图片4','图片5'];
+
+  if (imgs[slot]) {
+    box.classList.add('has');
+    box.classList.remove('uploading');
+    const fname = filenames[slot] || '图片';
+    c.innerHTML = `<img src="${imgs[slot]}"><div class="ub-fn" title="文件名: ${fname}">${fname}</div><div class="rm" onclick="event.stopPropagation();rmImg(${idx})">✕</div>`;
+  } else {
+    box.classList.remove('has');
+    box.classList.remove('uploading');
+    c.innerHTML = `<div class="ui">${icons[slot]}</div><div class="ul">${labels[slot]}</div>`;
+  }
+}
+
+// Sort images by filename number and rearrange slots
+function sortImages() {
+  const withImages = [];
+  for (let i = 0; i < 5; i++) {
+    if (imgs[i]) {
+      withImages.push({
+        slot: i,
+        url: imgs[i],
+        filename: filenames[i] || '',
+        num: extractNumber(filenames[i])
+      });
+    }
+  }
+  if (withImages.length <= 1) { toast('至少需要2张图片才能排序','err'); return; }
+
+  withImages.sort((a, b) => a.num - b.num);
+
+  // Clear all slots
+  for (let i = 0; i < 5; i++) { imgs[i] = null; filenames[i] = null; }
+
+  // Place sorted images back into slots (starting from slot 0)
+  for (let i = 0; i < withImages.length; i++) {
+    imgs[i] = withImages[i].url;
+    filenames[i] = withImages[i].filename;
+  }
+
+  for (let i = 1; i <= 5; i++) { renderSlot(i); updateSlotOverlay(i); }
+  toast('已按文件名数字排序 ✓','ok');
+}
+
+// Auto-sort after upload (silent, only if 2+ images and order changed)
+function autoSortImages() {
+  const count = imgs.filter(Boolean).length;
+  if (count <= 1) return;
+
+  const withImages = [];
+  for (let i = 0; i < 5; i++) {
+    if (imgs[i]) {
+      withImages.push({
+        slot: i,
+        url: imgs[i],
+        filename: filenames[i] || '',
+        num: extractNumber(filenames[i])
+      });
+    }
+  }
+  withImages.sort((a, b) => a.num - b.num);
+
+  // Check if order actually changed
+  let changed = false;
+  for (let i = 0; i < withImages.length; i++) {
+    if (withImages[i].slot !== i) { changed = true; break; }
+  }
+  if (!changed) return;
+
+  for (let i = 0; i < 5; i++) { imgs[i] = null; filenames[i] = null; }
+  for (let i = 0; i < withImages.length; i++) {
+    imgs[i] = withImages[i].url;
+    filenames[i] = withImages[i].filename;
+  }
+  for (let i = 1; i <= 5; i++) { renderSlot(i); updateSlotOverlay(i); }
+}
+
+// ===== Drag & Drop: Swap images between upload slots =====
+let dragFromSlot = null;
+let didDrag = false;
+
+function swapSlots(a, b) {
+  if (a === b) return;
+  [imgs[a], imgs[b]] = [imgs[b], imgs[a]];
+  [filenames[a], filenames[b]] = [filenames[b], filenames[a]];
+  for (let i = 1; i <= 5; i++) { renderSlot(i); updateSlotOverlay(i); }
+}
+
+function updateSlotOverlay(idx) {
+  const slot = idx - 1;
+  const box = document.getElementById('ub' + idx);
+  const overlay = box.querySelector('.ub-overlay');
+  if (!overlay) return;
+  const uploadBtn = overlay.querySelector('.ub-upload-btn');
+  const dragHint = overlay.querySelector('.ub-drag-hint');
+  if (imgs[slot]) {
+    box.classList.add('has');
+    overlay.style.display = 'flex';
+    if (uploadBtn) uploadBtn.style.display = 'flex';
+    if (dragHint) { dragHint.style.display = 'flex'; dragHint.title = '拖拽排序'; }
+  } else {
+    box.classList.remove('has');
+    overlay.style.display = 'flex';
+    if (uploadBtn) { uploadBtn.style.display = 'flex'; uploadBtn.title = '上传图片'; }
+    if (dragHint) dragHint.style.display = 'none';
+  }
+}
+
+function setupDragHandlers() {
+  for (let i = 1; i <= 5; i++) {
+    const box = document.getElementById('ub' + i);
+    const dragHint = box.querySelector('.ub-drag-hint');
+    const overlay = box.querySelector('.ub-overlay');
+
+    // Only the drag hint button starts drag (avoids conflict with upload button)
+    if (dragHint) {
+      dragHint.draggable = true;
+
+      dragHint.addEventListener('dragstart', function(e) {
+        const slot = i - 1;
+        if (!imgs[slot]) { e.preventDefault(); return; }
+        dragFromSlot = slot;
+        didDrag = true;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(slot));
+        // Set drag image to the box thumbnail
+        e.dataTransfer.setDragImage(box, box.offsetWidth / 2, box.offsetHeight / 2);
+        box.style.opacity = '0.4';
+        box.style.outline = '2px dashed var(--accent)';
+        box.style.outlineOffset = '-2px';
+      });
+
+      dragHint.addEventListener('dragend', function() {
+        box.style.opacity = '1';
+        box.style.outline = 'none';
+        dragFromSlot = null;
+        setTimeout(() => { didDrag = false; }, 50);
+      });
+    }
+
+    // Box is drop target
+    box.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      box.style.outline = '2px dashed var(--accent)';
+      box.style.outlineOffset = '-2px';
+    });
+
+    box.addEventListener('dragleave', function(e) {
+      if (!box.contains(e.relatedTarget)) {
+        box.style.outline = 'none';
+      }
+    });
+
+    box.addEventListener('drop', function(e) {
+      e.preventDefault();
+      box.style.outline = 'none';
+      box.style.opacity = '1';
+      const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      if (isNaN(from) || from === i - 1) return;
+      swapSlots(from, i - 1);
+    });
+
+    // Click on empty box opens file picker
+    box.addEventListener('click', function(e) {
+      if (didDrag) return; // just dropped, don't open file picker
+      // If clicking on buttons in overlay, let them handle it
+      if (e.target.closest('.ub-overlay')) return;
+      // If box has image, don't open file picker on click (use the upload button)
+      const slot = i - 1;
+      if (!imgs[slot]) {
+        document.getElementById('f' + i).click();
+      }
+    });
+
+    updateSlotOverlay(i);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupDragHandlers);
+} else {
+  setupDragHandlers();
+}
+
+function setP(t) { document.getElementById('chatInput').value=t; document.getElementById('chatInput').focus(); }
+
+// Load prompt buttons from server
+async function loadPromptButtons() {
+  try {
+    const d = await api('/api/prompts');
+    promptTemplates = d.prompts;
+    renderPromptButtons(d.prompts);
+  } catch(e) {
+    document.getElementById('promptBtns').innerHTML = '<div style="color:var(--text2);font-size:11px;">加载失败</div>';
+  }
+}
+
+function renderPromptButtons(prompts) {
+  const container = document.getElementById('promptBtns');
+  container.innerHTML = prompts.map(p =>
+    `<button class="qbtn" onclick="setP(this.dataset.prompt)" data-prompt="${p.prompt.replace(/"/g, '&quot;')}" style="text-align:left;padding:7px 10px;">${p.name}${p.mode==='dual'?'(双图)':'(单图)'}</button>`
+  ).join('');
+}
+
+// Admin tab switching
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(t => {
+    if ((tab==='users'&&t.textContent.includes('账户')) || (tab==='prompts'&&t.textContent.includes('提示词')) || (tab==='apikey'&&t.textContent.includes('API')) || (tab==='zhenzhen'&&t.textContent.includes('贞贞')) || (tab==='zcsdai'&&t.textContent.includes('智承')) || (tab==='manxiaobai'&&t.textContent.includes('漫小白')) || (tab==='sub2'&&t.textContent.includes('Sub2')) || (tab==='agnes'&&t.textContent.includes('Agnes'))) t.classList.add('active');
+  });
+  document.getElementById('tabUsers').style.display = tab==='users'?'block':'none';
+  document.getElementById('tabPrompts').style.display = tab==='prompts'?'block':'none';
+  document.getElementById('tabApikey').style.display = tab==='apikey'?'block':'none';
+  document.getElementById('tabZhenzhen').style.display = tab==='zhenzhen'?'block':'none';
+  document.getElementById('tabManxiaobai').style.display = tab==='manxiaobai'?'block':'none';
+  document.getElementById('tabSub2').style.display = tab==='sub2'?'block':'none';
+  document.getElementById('tabAgnes').style.display = tab==='agnes'?'block':'none';
+  if (tab === 'prompts') loadPromptEditor();
+  if (tab === 'users') loadAdminUsers();
+  if (tab === 'sub2') loadSub2QueueConfig();
+}
+
+let allAdminUsers = [];
+
+async function loadAdminUsers() {
+  try {
+    const d = await api('/api/admin/users');
+    allAdminUsers = d.users;
+    renderAdminUsers(allAdminUsers);
+  } catch(e) { toast('加载失败: '+e.message,'err'); }
+}
+
+function renderAdminUsers(users) {
+  const tbody = document.getElementById('userTableBody');
+  tbody.innerHTML = users.map(u => {
+    const statusBadge = u.enabled
+      ? '<span class="badge-enabled">已启用</span>'
+      : '<span class="badge-disabled">已禁用</span>';
+    const balClass = (u.balance || 0) <= 0 ? 'balance-zero' : '';
+    const bal = (u.balance || 0).toFixed(2);
+    const actions = [
+      `<button class="act-btn" onclick="showRechargeModal('${u.username}')">充值</button>`,
+    ];
+    if (u.role !== 'admin') {
+      actions.push(`<button class="act-btn" onclick="doToggleUser('${u.username}')">${u.enabled?'禁用':'启用'}</button>`);
+      actions.push(`<button class="act-btn" onclick="showUserLogs('${u.username}')">日志</button>`);
+      actions.push(`<button class="act-btn danger" onclick="deleteUser('${u.username}')">删除</button>`);
+    } else {
+      actions.push(`<button class="act-btn" onclick="showUserLogs('${u.username}')">日志</button>`);
+    }
+    return `<tr><td>${u.username}</td><td>${statusBadge}</td><td class="balance-display ${balClass}">¥${bal}</td><td><span class="stat-badge">${u.totalCalls}</span></td><td><span class="stat-badge ok">${u.successCalls}</span></td><td><span class="stat-badge" style="color:var(--warn)">¥${(u.totalSpent||0).toFixed(3)}</span></td><td>${u.lastCall?new Date(u.lastCall).toLocaleString('zh-CN'):'-'}</td><td class="actions">${actions.join('')}</td></tr>`;
+  }).join('');
+  if (users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px;">没有匹配的用户</td></tr>';
+  }
+}
+
+function filterUsers() {
+  const q = document.getElementById('userSearchInput').value.trim().toLowerCase();
+  if (!q) {
+    renderAdminUsers(allAdminUsers);
+    return;
+  }
+  const filtered = allAdminUsers.filter(u => {
+    return u.username.toLowerCase().includes(q) || String(u.balance || 0).includes(q);
+  });
+  renderAdminUsers(filtered);
+}
+
+function escHTML(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Admin: load prompt editor
+let newPromptCounter = 0;
+async function loadPromptEditor() {
+  newPromptCounter = 0;
+  try {
+    const d = await api('/api/admin/prompts');
+    renderPromptEditor(d.prompts);
+  } catch(e) { toast('加载提示词失败','err'); }
+}
+function renderPromptEditor(prompts) {
+  const list = document.getElementById('promptEditList');
+  list.innerHTML = prompts.map((p,i) =>
+    `<div class="pe-item"><div class="pe-header"><span class="pe-name">${escHTML(p.name)}</span><span class="pe-badge">${p.mode==='dual'?'双图':'单图'}</span></div><textarea id="pe_${i}">${escHTML(p.prompt)}</textarea></div>`
+  ).join('');
+}
+
+// Admin: save all prompts (existing + newly added)
+async function saveAdminPrompts() {
+  const updated = promptTemplates.map((p,i) => {
+    const ta = document.getElementById('pe_'+i);
+    return { ...p, prompt: ta ? ta.value : p.prompt };
+  });
+  document.querySelectorAll('.pe-item[data-new]').forEach(item => {
+    const id = item.dataset.new;
+    const nameInput = document.getElementById('pe_newname_' + id);
+    const modeSelect = document.getElementById('pe_newmode_' + id);
+    const textarea = document.getElementById('pe_new_' + id);
+    if (nameInput && textarea) {
+      const name = nameInput.value.trim();
+      if (name) {
+        updated.push({
+          name: name,
+          mode: modeSelect ? modeSelect.value : 'dual',
+          prompt: textarea.value.trim()
+        });
+      }
+    }
+  });
+  try {
+    await api('/api/admin/prompts', { method:'POST', body: JSON.stringify({ prompts: updated }) });
+    promptTemplates = updated;
+    renderPromptButtons(updated);
+    loadPromptEditor();
+    toast('提示词已保存,全局生效','ok');
+  } catch(e) { toast('保存失败: '+e.message,'err'); }
+}
+function addPromptTemplate() {
+  newPromptCounter++;
+  const id = newPromptCounter;
+  const list = document.getElementById('promptEditList');
+  const div = document.createElement('div');
+  div.className = 'pe-item new-item';
+  div.dataset.new = id;
+  div.innerHTML = `
+    <div class="pe-new-fields">
+      <input class="pe-new-name" id="pe_newname_${id}" type="text" placeholder="提示词名称" />
+      <select class="pe-new-mode" id="pe_newmode_${id}">
+        <option value="dual">双图</option>
+        <option value="single">单图</option>
+      </select>
+      <button class="pe-del" onclick="this.closest('.pe-item').remove()">删除</button>
+    </div>
+    <textarea id="pe_new_${id}" placeholder="输入提示词内容..." style="min-height:100px;"></textarea>
+  `;
+  list.appendChild(div);
+  div.querySelector('.pe-new-name').focus();
+}
+
+// Admin: reset to default
+async function resetPromptsDefault() {
+  if(!confirm('确定恢复默认提示词?当前自定义内容将丢失。')) return;
+  try {
+    // Send empty to trigger server defaults
+    await api('/api/admin/prompts', { method:'POST', body: JSON.stringify({ prompts: [] }) });
+    loadPromptButtons();
+    loadPromptEditor();
+    toast('已恢复默认提示词','ok');
+  } catch(e) { toast('恢复失败','err'); }
+}
+
+function addMsg(role,text,images,genImg) {
+  const c=document.getElementById('msgs'); const d=document.createElement('div');
+  d.className='msg '+ (role==='user'?'user':'ai');
+  let ih=images?.length ? `<div class="mimgs">${images.map(s=>`<img src="${s}">`).join('')}</div>` : '';
+  let gh=genImg ? `<div class="gimg"><img src="${genImg}"><div class="gact"><button class="gbtn" onclick="dlImg('${genImg}')">⬇️ 下载</button><button class="gbtn" onclick="useRef('${genImg}')">🔄 用作参考</button></div></div>` : '';
+  d.innerHTML=`<div class="mav">${role==='user'?'👤':'✨'}</div><div class="mbody"><div class="mrole">${role==='user'?'你':'AI'}</div><div class="mtext">${text}</div>${ih}${gh}</div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+
+function addTyping() { const c=document.getElementById('msgs'); const d=document.createElement('div'); d.className='msg ai'; d.id='typing'; d.innerHTML=`<div class="mav">✨</div><div class="mbody"><div class="mrole">AI</div><div class="typing"><i></i><i></i><i></i></div></div>`; c.appendChild(d); c.scrollTop=c.scrollHeight; }
+function rmTyping() { const e=document.getElementById('typing'); if(e) e.remove(); }
+
+async function send() {
+  const inp=document.getElementById('chatInput'); const text=inp.value.trim(); if(!text)return;
+  const ui=imgs.filter(Boolean);
+  addMsg('user',text,ui); chatHistory.push({role:'user',content:text,images:ui});
+  inp.value=''; inp.style.height='auto'; addTyping();
+  try {
+    const msgs=chatHistory.map(m => { if(m.role==='user'&&m.images) return {role:'user',content:[{type:'text',text:m.content},...m.images.map(i=>({type:'image_url',image_url:{url:i}}))]}; return {role:m.role,content:m.content}; });
+    const d=await api('/api/chat',{method:'POST',body:JSON.stringify({messages:msgs,model:document.getElementById('modelSelect').value})});
+    rmTyping(); const reply=d.choices?.[0]?.message?.content||'无回复'; addMsg('ai',reply); chatHistory.push({role:'assistant',content:reply});
+  } catch(e) { rmTyping(); addMsg('ai','❌ '+e.message); toast('请求失败','err'); }
+}
+
+// ===== Concurrent Image Generation =====
+function createPendingCard(prompt, model, size, quality) {
+  const g = document.getElementById('results');
+  const em = g.querySelector('.empty'); if(em) em.remove();
+
+  const taskId = 'task_' + (++taskIdCounter);
+  const now = Date.now();
+
+  const card = document.createElement('div');
+  card.className = 'rcard pending';
+  card.id = taskId;
+
+  const sizeLabel = size !== 'auto' ? size : 'auto';
+  const qualityLabel = quality !== 'auto' ? quality : 'auto';
+
+  card.innerHTML = `
+    <div class="rcard-thumb">
+      <div class="pending-content">
+        <div class="spinner"></div>
+        <div class="pending-label">生成中...</div>
+        <div class="timer-display" id="${taskId}_timer">00:00</div>
+        <div class="timer-ms" id="${taskId}_ms">0.0s</div>
+      </div>
+    </div>
+    <div class="rinfo">
+      <div class="rprompt">${prompt}</div>
+      <div class="rtime">${model} · ${sizeLabel} · ${qualityLabel}</div>
+    </div>
+  `;
+
+  g.insertBefore(card, g.firstChild);
+  updateTaskCounts();
+
+  // Start timer
+  const timerInterval = setInterval(() => {
+    const elapsed = Date.now() - now;
+    const sec = Math.floor(elapsed / 1000);
+    const min = Math.floor(sec / 60);
+    const s = sec % 60;
+    const ms = (elapsed % 1000) / 100;
+    const timerEl = document.getElementById(taskId + '_timer');
+    const msEl = document.getElementById(taskId + '_ms');
+    if (timerEl) timerEl.textContent = `${String(min).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (msEl) msEl.textContent = `${sec}.${Math.floor(ms)}s`;
+  }, 100);
+
+  tasks[taskId] = { startTime: now, timerInterval, card, prompt, model, size, quality, status: 'pending' };
+  return taskId;
+}
+
+function completeTask(taskId, imageUrl) {
+  const task = tasks[taskId];
+  if (!task) return;
+  clearInterval(task.timerInterval);
+
+  const elapsed = ((Date.now() - task.startTime) / 1000).toFixed(1);
+  task.status = 'success';
+
+  const card = task.card;
+  card.className = 'rcard success';
+  card.querySelector('.rcard-thumb').innerHTML = `<img src="${imageUrl}">`;
+  const rinfo = card.querySelector('.rinfo');
+  const histId = 'hist_' + Date.now();
+  card.dataset.histId = histId;
+  card.dataset.imageUrl = imageUrl;
+  rinfo.innerHTML = `
+    <div class="rprompt">${task.prompt}</div>
+    <div class="rtime">⏱️ ${elapsed}s · ${formatModel(task.model)} · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</div>
+    <div class="rbtns">
+      <button class="rbtn" onclick="dlImg('${imageUrl}')">⬇️ 下载</button>
+      <button class="rbtn" onclick="saveImg('${imageUrl}')">💾 保存</button>
+      <button class="rbtn" onclick="useRef('${imageUrl}')">🔄 参考</button>
+      <button class="rbtn del" onclick="removeTask('${histId}')">🗑️</button>
+    </div>
+  `;
+  doneCount++;
+  updateTaskCounts();
+
+  // Save to server history
+  saveToHistory({ id:histId, imageUrl, prompt:task.prompt, model:task.model, size:task.size, quality:task.quality, duration:parseFloat(elapsed), status:'success' });
+  loadUserBalance();
+  loadTodayStats();
+  trimResultCards();
+}
+
+function failTask(taskId, errorMsg) {
+  const task = tasks[taskId];
+  if (!task) return;
+  clearInterval(task.timerInterval);
+
+  const elapsed = ((Date.now() - task.startTime) / 1000).toFixed(1);
+  task.status = 'failed';
+
+  const card = task.card;
+  card.className = 'rcard failed';
+  card.querySelector('.rcard-thumb').innerHTML = `
+    <div class="pending-content">
+      <div style="font-size:32px;margin-bottom:8px;">❌</div>
+      <div style="font-size:12px;color:var(--danger);font-weight:600;margin-bottom:4px;">生成失败</div>
+      <div style="font-size:10px;color:var(--text2);max-width:200px;word-break:break-word;">${errorMsg}</div>
+    </div>
+  `;
+  const rinfo = card.querySelector('.rinfo');
+  const histId = 'hist_' + Date.now();
+  card.dataset.histId = histId;
+  card.dataset.imageUrl = '';
+  rinfo.innerHTML = `
+    <div class="rprompt">${task.prompt}</div>
+    <div class="rtime">⏱️ ${elapsed}s · ${formatModel(task.model)} · 失败</div>
+    <div class="rbtns">
+      <button class="rbtn del" onclick="removeTask('${histId}')">🗑️ 移除</button>
+    </div>
+  `;
+  doneCount++;
+  updateTaskCounts();
+
+  saveToHistory({ id:histId, imageUrl:null, prompt:task.prompt, model:task.model, size:task.size, quality:task.quality, duration:parseFloat(elapsed), status:'failed' });
+  loadUserBalance();
+  loadTodayStats();
+}
+
+function updateTaskCounts() {
+  const pending = Object.values(tasks).filter(t => t.status === 'pending').length;
+  const counter = document.getElementById('taskCount');
+  if (pending > 0 || doneCount > 0) {
+    counter.style.display = 'flex';
+    document.getElementById('taskPending').textContent = pending;
+    document.getElementById('taskDone').textContent = doneCount;
+  } else {
+    counter.style.display = 'none';
+  }
+}
+
+// 创建 pending 卡片(从 generate-log 恢复,页面刷新后重建)
+function createPendingCardFromLog(pt) {
+  const g = document.getElementById('results');
+  const em = g.querySelector('.empty'); if(em) em.remove();
+
+  const taskId = 'task_' + pt.id;
+  // 跳过已存在的卡片
+  if (document.querySelector(`[data-task-id="${taskId}"]`)) return null;
+
+  const startTime = new Date(pt.submittedAt).getTime();
+  const card = document.createElement('div');
+  card.className = 'rcard';
+  card.dataset.taskId = taskId;
+  card.id = taskId;
+  card.innerHTML = `
+    <div class="rcard-thumb">
+      <div class="pending-content">
+        <div style="font-size:24px;margin-bottom:8px;">⏳</div>
+        <div style="font-size:12px;color:var(--text2);font-weight:600;">生成中...</div>
+        <div id="${taskId}_timer" style="font-size:20px;font-weight:700;color:var(--accent);margin-top:4px;">--:--</div>
+        <div id="${taskId}_ms" style="font-size:11px;color:var(--text2);">--s</div>
+      </div>
+    </div>
+    <div class="rinfo">
+      <div class="rprompt">${pt.prompt}</div>
+      <div class="rtime">${formatModel(pt.model)} · 后台生成中...</div>
+    </div>
+  `;
+
+  g.insertBefore(card, g.firstChild);
+
+  // Start timer
+  const timerInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const safeElapsed = elapsed < 0 ? 0 : elapsed; // Prevent negative elapsed for old pending tasks
+    const sec = Math.floor(elapsed / 1000);
+    const min = Math.floor(sec / 60);
+    const s = sec % 60;
+    const ms = (elapsed % 1000) / 100;
+    const timerEl = document.getElementById(taskId + '_timer');
+    const msEl = document.getElementById(taskId + '_ms');
+    if (timerEl) timerEl.textContent = `${String(min).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (msEl) msEl.textContent = `${sec}.${Math.floor(ms)}s`;
+  }, 100);
+
+  tasks[taskId] = { startTime, timerInterval, card, prompt: pt.prompt, model: pt.model, status: 'pending', apiRequestId: pt.apiRequestId };
+  updateTaskCounts();
+
+  // Start polling for completion
+  pollTaskStatus(taskId, pt.apiRequestId || pt.id).catch(() => {});
+
+  return card;
+}
+
+// 创建 pending 卡片(从 generate-log 恢复,页面刷新后重建)
+function createPendingCardFromLog(pt) {
+  const g = document.getElementById('results');
+  const em = g.querySelector('.empty'); if(em) em.remove();
+
+  const taskId = 'task_' + pt.id;
+  // 跳过已存在的卡片
+  if (document.querySelector(`[data-task-id="${taskId}"]`)) return null;
+
+  const startTime = new Date(pt.submittedAt).getTime();
+  const card = document.createElement('div');
+  card.className = 'rcard';
+  card.dataset.taskId = taskId;
+  card.id = taskId;
+  card.innerHTML = `
+    <div class="rcard-thumb">
+      <div class="pending-content">
+        <div style="font-size:24px;margin-bottom:8px;">⏳</div>
+        <div style="font-size:12px;color:var(--text2);font-weight:600;">生成中...</div>
+        <div id="${taskId}_timer" style="font-size:20px;font-weight:700;color:var(--accent);margin-top:4px;">--:--</div>
+        <div id="${taskId}_ms" style="font-size:11px;color:var(--text2);">--s</div>
+      </div>
+    </div>
+    <div class="rinfo">
+      <div class="rprompt">${pt.prompt}</div>
+      <div class="rtime">${formatModel(pt.model)} · 后台生成中...</div>
+    </div>
+  `;
+
+  g.insertBefore(card, g.firstChild);
+
+  // Start timer
+  const timerInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const sec = Math.floor(elapsed / 1000);
+    const min = Math.floor(sec / 60);
+    const s = sec % 60;
+    const ms = (elapsed % 1000) / 100;
+    const timerEl = document.getElementById(taskId + '_timer');
+    const msEl = document.getElementById(taskId + '_ms');
+    if (timerEl) timerEl.textContent = `${String(min).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (msEl) msEl.textContent = `${sec}.${Math.floor(ms)}s`;
+  }, 100);
+
+  tasks[taskId] = { startTime, timerInterval, card, prompt: pt.prompt, model: pt.model, status: 'pending', apiRequestId: pt.apiRequestId, _restored: true };
+  updateTaskCounts();
+
+  // Start polling for completion
+  pollTaskStatus(taskId, pt.apiRequestId || pt.id).catch(() => {});
+
+  return card;
+}
+
+function clearDoneTasks() {
+  Object.keys(tasks).forEach(id => {
+    if (tasks[id].status !== 'pending') {
+      if (tasks[id].card) tasks[id].card.remove();
+      delete tasks[id];
+    }
+  });
+  doneCount = 0;
+  updateTaskCounts();
+  trimResultCards();
+}
+
+async function saveToHistory(item) {
+  try { await api('/api/task-history', { method:'POST', body:JSON.stringify(item) }); } catch(e) { console.error('saveToHistory failed:', e); toast('历史记录保存失败: '+e.message, 'err'); }
+}
+
+function removeTask(histId) {
+  // Remove from DOM
+  document.querySelectorAll(`[data-hist-id="${histId}"]`).forEach(el => el.remove());
+  // Remove from server
+  api(`/api/task-history/${histId}`, { method:'DELETE' }).catch(()=>{});
+  doneCount = Math.max(0, doneCount - 1);
+  updateTaskCounts();
+}
+
+function addHistoryCard(item) {
+  const g = document.getElementById('results');
+  // 跳过已存在的卡片(防止 loadHistory 和 completeTask 重复创建)
+  if (document.querySelector(`[data-hist-id="${item.id}"]`)) return;
+  // 同一 imageUrl 只显示一张卡片, 防止因时间差导致 histId 不匹配而重复显示
+  if (item.imageUrl && Array.from(document.querySelectorAll('[data-image-url]')).some(el => el.dataset.imageUrl === item.imageUrl)) return;
+  const em = g.querySelector('.empty'); if(em) em.remove();
+
+  const card = document.createElement('div');
+  card.className = 'rcard ' + (item.status === 'success' ? 'success' : 'failed');
+  card.dataset.histId = item.id;
+  const elapsed = (item.duration || 0).toFixed(1);
+  const time = new Date(item.createdAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  if (item.status === 'success' && item.imageUrl) {
+    card.dataset.imageUrl = item.imageUrl;
+    card.innerHTML = `
+      <div class="rcard-thumb"><img src="${item.imageUrl}"></div>
+      <div class="rinfo">
+        <div class="rprompt">${item.prompt}</div>
+        <div class="rtime">⏱️ ${elapsed}s · ${formatModel(item.model)} · ${time}</div>
+        <div class="rbtns">
+          <button class="rbtn" onclick="dlImg('${item.imageUrl}')">⬇️ 下载</button>
+          <button class="rbtn" onclick="saveImg('${item.imageUrl}')">💾 保存</button>
+          <button class="rbtn" onclick="useRef('${item.imageUrl}')">🔄 参考</button>
+          <button class="rbtn del" onclick="removeTask('${item.id}')">🗑️</button>
+        </div>
+      </div>
+    `;
+  } else {
+    card.innerHTML = `
+      <div class="rcard-thumb">
+        <div class="pending-content">
+          <div style="font-size:32px;margin-bottom:8px;">❌</div>
+          <div style="font-size:12px;color:var(--danger);font-weight:600;">生成失败</div>
+        </div>
+      </div>
+      <div class="rinfo">
+        <div class="rprompt">${item.prompt}</div>
+        <div class="rtime">⏱️ ${elapsed}s · ${formatModel(item.model)} · 失败 · ${time}</div>
+        <div class="rbtns"><button class="rbtn del" onclick="removeTask('${item.id}')">🗑️ 移除</button></div>
+      </div>
+    `;
+  }
+
+  g.insertBefore(card, g.firstChild);
+  doneCount++;
+  updateTaskCounts();
+  trimResultCards();
+}
+
+async function loadHistory() {
+  try {
+    const d = await api('/api/task-history');
+    if (d.history && d.history.length > 0) {
+      const em = document.querySelector('.empty'); if(em) em.remove();
+      // Server already returns newest-first (unshift), but addHistoryCard uses insertBefore(firstChild)
+      // which reverses the order. So iterate in reverse to maintain newest-first.
+      for (let i = d.history.length - 1; i >= 0; i--) {
+        addHistoryCard(d.history[i]);
+      }
+    }
+  } catch(e) {}
+
+  // Load pending tasks from generate-log (for page refresh recovery)
+  try {
+    const d = await api('/api/generate-log');
+    if (d.pendingTasks && d.pendingTasks.length > 0) {
+      const em = document.querySelector('.empty'); if(em) em.remove();
+      for (const pt of d.pendingTasks) {
+        createPendingCardFromLog(pt);
+      }
+    }
+  } catch(e) { console.log('[loadHistory] failed to load pending tasks:', e); }
+}
+
+// Generate image (concurrent - no blocking)
+async function generate() {
+  const inp = document.getElementById('chatInput');
+  const text = inp.value.trim();
+  if (!text) { toast('请输入描述','err'); return; }
+
+  const currentMode = document.querySelector('.mode-btn.active')?.dataset.mode || 'img2img';
+
+  // 图生图: 需要上传参考图
+  if (currentMode === 'img2img') {
+    const anyStillUploading = uploading.some(Boolean);
+    if (anyStillUploading) {
+      toast('⏳ 图片上传中,请稍后再点生成','err');
+      return;
+    }
+    const uploadedImgs = imgs.filter(Boolean);
+    if (!uploadedImgs.length) { toast('请至少上传一张参考图','err'); return; }
+
+    const model = document.getElementById('modelSelect').value;
+    const size = document.getElementById('sizeSelect').value;
+    const quality = document.getElementById('qualitySelect').value;
+
+    const taskId = createPendingCard(text, model, size, quality);
+    addMsg('user', '🎨 '+text, uploadedImgs);
+
+    try {
+      const d = await api('/api/generate', { method:'POST', body: JSON.stringify({
+        prompt: text, model, size, quality, images: uploadedImgs
+      }) });
+
+      if (d.task_id && d.status === 'pending') {
+        addMsg('ai', `⏳ 任务已提交,正在后台生成中...`);
+        await pollTaskStatus(taskId, d.task_id);
+        return;
+      }
+
+      let url = '';
+      if (d.data && d.data[0]) url = d.data[0].url || d.data[0].image_url || d.data[0].preview_image_url || '';
+
+      if (url) {
+        completeTask(taskId, url);
+        addMsg('ai', `✅ 生成成功!用时 ${((Date.now() - tasks[taskId].startTime)/1000).toFixed(1)}s`, null, url);
+        toast('图片生成成功!','ok');
+      } else {
+        throw new Error('未获取到图片');
+      }
+    } catch(e) {
+      failTask(taskId, e.message);
+      addMsg('ai', '❌ '+e.message);
+      toast('生成失败: '+e.message,'err');
+    }
+  }
+  // 文生图: 使用当前选择模型
+  else if (currentMode === 'txt2img') {
+    const model = document.getElementById('modelSelect').value;
+    const size = document.getElementById('sizeSelect').value;
+    const quality = document.getElementById('qualitySelect').value;
+    const outputFormat = document.getElementById('outputFormatSelect').value;
+
+    const taskId = createPendingCard(text, model, size, quality);
+    addMsg('user', '✨ '+text);
+
+    try {
+      const d = await api('/api/generate-txt2img', { method:'POST', body: JSON.stringify({
+        prompt: text, model, size, quality, outputFormat
+      }) });
+
+      if (d.task_id && d.status === 'pending') {
+        addMsg('ai', `⏳ 任务已提交,正在后台生成中...`);
+        await pollTaskStatus(taskId, d.task_id);
+        return;
+      }
+
+      let url = '';
+      if (d.data && d.data[0]) url = d.data[0].url || d.data[0].image_url || d.data[0].preview_image_url || '';
+
+      if (url) {
+        completeTask(taskId, url);
+        addMsg('ai', `✅ 生成成功!用时 ${((Date.now() - tasks[taskId].startTime)/1000).toFixed(1)}s`, null, url);
+        toast('图片生成成功!','ok');
+      } else {
+        throw new Error('未获取到图片');
+      }
+    } catch(e) {
+      failTask(taskId, e.message);
+      addMsg('ai', '❌ '+e.message);
+      toast('生成失败: '+e.message,'err');
+    }
+  }
+}
+
+// 图生图/文生图 模式切换
+function switchMode(mode) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.mode-btn[data-mode="${mode}"]`).classList.add('active');
+
+  const uploadSection = document.getElementById('uploadSection');
+  const txt2imgSettings = document.getElementById('txt2imgSettings');
+  const chatInput = document.getElementById('chatInput');
+  const modelSelect = document.getElementById('modelSelect');
+
+  if (mode === 'txt2img') {
+    // 文生图: 隐藏上传区域, 隐藏快捷提示词, 模型下拉保持可选
+    uploadSection.style.display = 'none';
+    txt2imgSettings.style.display = 'block';
+    document.getElementById('promptSection').style.display = 'none';
+    chatInput.placeholder = '描述你想要生成的图片...';
+    setFullImageModelOptions(modelSelect.value);
+  } else {
+    // 图生图: 恢复上传区域, 恢复快捷提示词, 恢复所有模型
+    uploadSection.style.display = 'flex';
+    txt2imgSettings.style.display = 'none';
+    document.getElementById('promptSection').style.display = 'block';
+    chatInput.placeholder = '描述你想要的优化效果...';
+    setFullImageModelOptions(modelSelect.value);
+  }
+  updatePriceLabel();
+  loadTodayStats();
+}
+
+// 轮询后端异步任务状态
+async function pollTaskStatus(localTaskId, serverTaskId) {
+  const maxAttempts = 120; // 10 minutes (5s * 120)
+  const pollInterval = 5000;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+    // Check if user removed the card
+    const task = tasks[localTaskId];
+    if (!task || !task.card || !document.getElementById(localTaskId)) {
+      console.log('[poll] task card removed, stopping poll');
+      return;
+    }
+
+    try {
+      const d = await api(`/api/task-status?task_id=${encodeURIComponent(serverTaskId)}`);
+
+      if (d.status === 'success' && d.resultUrls && d.resultUrls.length > 0) {
+        // Task completed
+        const urls = d.resultUrls;
+        if (urls.length === 1) {
+          completeTask(localTaskId, urls[0]);
+          addMsg('ai', `✅ 生成成功!用时 ${((Date.now() - task.startTime)/1000).toFixed(1)}s`, null, urls[0]);
+          toast('图片生成成功!','ok');
+        } else {
+          // Multi-image completion
+          if (task.timerInterval) clearInterval(task.timerInterval);
+          const elapsedSec = ((Date.now() - task.startTime) / 1000).toFixed(1);
+          const card = document.getElementById(localTaskId);
+          if (card) {
+            card.className = 'rcard success';
+            let thumbsHtml = '';
+            for (const url of urls) {
+              thumbsHtml += `<div class="rcard-thumb"><img src="${url}" alt="生成图片" loading="lazy"><div class="rcard-actions"><button onclick="saveImg('${url}')" title="保存">💾</button><button onclick="downloadDirect('${url}')" title="下载">⬇️</button></div></div>`;
+            }
+            card.querySelector('.rcard-thumb').outerHTML = '<div class="multi-thumbs">' + thumbsHtml + '</div>';
+            if (card.querySelector('.rinfo .rtime')) {
+              card.querySelector('.rinfo .rtime').textContent = `✅ 生成完成 · ${urls.length}张图片 · ${elapsedSec}s`;
+            }
+          }
+          addMsg('ai', `✅ 生成成功!${urls.length}张图片，用时 ${elapsedSec}s`, urls);
+          toast('生成成功! ('+urls.length+'张)','ok');
+        }
+        return;
+      } else if (d.status === 'error') {
+        // Task failed
+        failTask(localTaskId, d.error || '任务失败');
+        const task = tasks[localTaskId];
+        if (!task || !task._restored) {
+          addMsg('ai', '❌ ' + (d.error || '任务失败'));
+          toast('生成失败: ' + (d.error || '任务失败'), 'err');
+        }
+        return;
+      } else if (d.status === 'not_found') {
+        // Task not found (e.g. container restarted, log lost)
+        failTask(localTaskId, '任务记录丢失,请重试');
+        addMsg('ai', '❌ 任务记录丢失');
+        toast('任务记录丢失,请重试', 'err');
+        return;
+      }
+      // else still pending, update timer display
+      const elapsedSec = Math.floor((Date.now() - task.startTime) / 1000);
+      const min = Math.floor(elapsedSec / 60);
+      const sec = elapsedSec % 60;
+      const timerEl = document.getElementById(localTaskId + '_timer');
+      if (timerEl) timerEl.textContent = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    } catch(e) {
+      console.log('[poll] error:', e.message);
+      // Don't fail immediately, keep polling
+    }
+  }
+
+  // Timeout
+  failTask(localTaskId, '任务超时,请重试');
+  addMsg('ai', '❌ 任务超时');
+  toast('生成超时', 'err');
+}
+
+async function saveImg(url) {
+  try {
+    const r = await api('/api/save-image', { method:'POST', body:JSON.stringify({imageUrl:url, filename:`${currentUser.username}_${Date.now()}.png`}) });
+    if(r.success) toast('已保存','ok');
+  } catch(e) { toast('保存失败','err'); }
+}
+
+async function dlImg(url) {
+  try {
+    let blob;
+    // base64 data URI → 直接转 blob
+    if (url.startsWith('data:')) {
+      const match = url.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        const byteChars = atob(match[2]);
+        const bytes = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+        blob = new Blob([bytes], { type: match[1] });
+      } else { throw new Error('无效的 base64 数据'); }
+    }
+    // 本地 /results/ 或 /uploads/ 或 /archive/ 路径,直接 fetch
+    else if (url.startsWith('/results/') || url.startsWith('/uploads/') || url.startsWith('/archive/')) {
+      const res = await fetch(url);
+      blob = await res.blob();
+    } else {
+      // 外部 URL → 通过服务端代理下载(绕过 CORS)
+      const proxyUrl = `/api/proxy-download?url=${encodeURIComponent(url)}`;
+      const res = await fetch(proxyUrl);
+      if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
+      blob = await res.blob();
+    }
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `img_${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    toast('下载成功','ok');
+  } catch(e) {
+    window.open(url, '_blank');
+    toast('下载失败,已在新标签页打开','err');
+  }
+}
+function useRef(url) {
+  // Find first empty slot, fallback to slot 1
+  let slot = 0;
+  for (let i = 0; i < 5; i++) { if (!imgs[i]) { slot = i; break; } }
+  imgs[slot] = url;
+  const idx = slot + 1;
+  const box = document.getElementById('ub' + idx), c = document.getElementById('uc' + idx);
+  box.classList.add('has');
+  c.innerHTML = `<img src="${url}"><div class="rm" onclick="event.stopPropagation();rmImg(${idx})">✕</div>`;
+  updateSlotOverlay(idx);
+  toast('已设为' + ['产品图','参考图','图片3','图片4','图片5'][slot], 'ok');
+}
+function clearChat() { document.getElementById('msgs').innerHTML=`<div class="msg ai"><div class="mav">✨</div><div class="mbody"><div class="mrole">AI</div><div class="mtext">对话已清空,重新开始吧!</div></div></div>`; chatHistory=[]; toast('已清空','ok'); }
+function onKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();generate();} }
+document.getElementById('chatInput').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,200)+'px';});
+
+// Admin
+async function openAdmin() {
+  document.getElementById('adminOverlay').classList.add('show');
+  // Default to users tab
+  switchAdminTab('users');
+}
+function closeAdmin() { document.getElementById('adminOverlay').classList.remove('show'); }
+async function saveApiKey() { const k=document.getElementById('adminApiKey').value.trim(); if(!k){toast('API Key 不能为空','err');return;} try { await api('/api/admin/apikey',{method:'POST',body:JSON.stringify({apiKey:k})}); toast('API Key 已保存','ok'); } catch(e) { toast('保存失败: '+e.message,'err'); } }
+async function saveZhenzhenApiKey() { const k=document.getElementById('adminZhenzhenApiKey').value.trim(); if(!k){toast('贞贞令牌不能为空','err');return;} try { await api('/api/admin/zhenzhen-apikey',{method:'POST',body:JSON.stringify({apiKey:k})}); toast('贞贞令牌已保存','ok'); } catch(e) { toast('保存失败: '+e.message,'err'); } }
+async function saveManxiaobaiApiKey() { const k=document.getElementById('adminManxiaobaiApiKey').value.trim(); if(!k){toast('漫小白令牌不能为空','err');return;} try { await api('/api/admin/manxiaobai-apikey',{method:'POST',body:JSON.stringify({apiKey:k})}); toast('漫小白令牌已保存','ok'); } catch(e) { toast('保存失败: '+e.message,'err'); } }
+async function saveSub2ApiKey() { const k=document.getElementById('adminSub2ApiKey').value.trim(); if(!k){toast('Sub2令牌不能为空','err');return;} try { await api('/api/admin/sub2-apikey',{method:'POST',body:JSON.stringify({apiKey:k})}); toast('Sub2令牌已保存','ok'); } catch(e) { toast('保存失败: '+e.message,'err'); } }
+async function loadSub2QueueConfig() {
+  const statusEl = document.getElementById('adminSub2QueueStatus');
+  try {
+    const d = await api('/api/admin/sub2-queue-config');
+    const cfg = d.config || {};
+    const st = d.status || {};
+    const input = document.getElementById('adminSub2MaxConcurrent');
+    const timeoutInput = document.getElementById('adminSub2TimeoutSeconds');
+    if (input) input.value = cfg.maxConcurrent || st.maxConcurrent || 3;
+    if (timeoutInput) timeoutInput.value = Math.round((cfg.runningTimeoutMs || (st.timeoutSeconds||180)*1000) / 1000);
+    if (statusEl) statusEl.textContent = '最大并发 '+(st.maxConcurrent||cfg.maxConcurrent||3)+'，正在生成 '+(st.running||0)+'，排队中 '+(st.queued||0)+'，超时 '+(st.timeoutSeconds||180)+' 秒';
+  } catch(e) {
+    if (statusEl) statusEl.textContent = '读取失败：'+e.message;
+  }
+}
+async function saveSub2QueueConfig() {
+  const n = parseInt(document.getElementById('adminSub2MaxConcurrent').value, 10);
+  const timeoutSeconds = parseInt(document.getElementById('adminSub2TimeoutSeconds').value, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 20) { toast('并发数请输入 1-20','err'); return; }
+  if (!Number.isFinite(timeoutSeconds) || timeoutSeconds < 30 || timeoutSeconds > 3600) { toast('超时秒数请输入 30-3600','err'); return; }
+  try {
+    await api('/api/admin/sub2-queue-config',{method:'POST',body:JSON.stringify({maxConcurrent:n,timeoutSeconds:timeoutSeconds})});
+    toast('Sub2队列配置已保存','ok');
+    loadSub2QueueConfig();
+  } catch(e) { toast('保存失败: '+e.message,'err'); }
+}
+async function saveAgnesApiKey() { const k=document.getElementById('adminAgnesApiKey').value.trim(); if(!k){toast('Agnes令牌不能为空','err');return;} try { await api('/api/admin/agnes-apikey',{method:'POST',body:JSON.stringify({apiKey:k})}); toast('Agnes令牌已保存','ok'); } catch(e) { toast('保存失败: '+e.message,'err'); } }
+async function resetStats(u) { if(!confirm('确定重置 '+u+' 的统计?'))return; try { await api(`/api/admin/users/${u}/reset-stats`,{method:'POST'}); toast('已重置','ok'); openAdmin(); } catch(e) { toast('操作失败','err'); } }
+async function deleteUser(u) { if(!confirm('确定删除 '+u+'?'))return; try { await api(`/api/admin/users/${u}`,{method:'DELETE'}); toast('已删除','ok'); loadAdminUsers(); } catch(e) { toast('删除失败','err'); } }
+
+// ===== AI Multi-Angle Generation =====
+function updateAiAngleLabel() {
+  const count = parseInt(document.getElementById('aiAngleCount').value, 10);
+  const btn = document.getElementById('aiGenerateBtn');
+  if (btn) btn.querySelector('span').textContent = count + '张图';
+}
+
+function switchMode(mode) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.querySelector(`.mode-btn[data-mode="${mode}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  const uploadSection = document.getElementById('uploadSection');
+  const txt2imgSettings = document.getElementById('txt2imgSettings');
+  const chatInput = document.getElementById('chatInput');
+  const modelSelect = document.getElementById('modelSelect');
+  const promptSection = document.getElementById('promptSection');
+  const aiAngleCount = document.getElementById('aiAngleCount');
+  const aiGenerateBtn = document.getElementById('aiGenerateBtn');
+
+  txt2imgSettings.style.display = 'none';
+  promptSection.style.display = 'block';
+  if (aiAngleCount) aiAngleCount.style.display = 'none';
+  if (aiGenerateBtn) aiGenerateBtn.style.display = 'none';
+
+  if (mode === 'txt2img') {
+    uploadSection.style.display = 'none';
+    txt2imgSettings.style.display = 'block';
+    promptSection.style.display = 'none';
+    chatInput.placeholder = '描述你想要生成的图片...';
+    setFullImageModelOptions(modelSelect.value);
+  } else if (mode === 'ai-generate') {
+    uploadSection.style.display = 'flex';
+    promptSection.style.display = 'none';
+    aiAngleCount.style.display = 'flex';
+    if (aiGenerateBtn) aiGenerateBtn.style.display = 'block';
+    chatInput.placeholder = '描述你想要的效果（例：换成不同角度，生成6张图）';
+    modelSelect.disabled = true;
+    updateAiAngleLabel();
+  } else {
+    uploadSection.style.display = 'flex';
+    txt2imgSettings.style.display = 'none';
+    promptSection.style.display = 'block';
+    chatInput.placeholder = '描述你想要的优化效果...';
+    setFullImageModelOptions(modelSelect.value);
+  }
+  updatePriceLabel();
+  loadTodayStats();
+}
+
+async function aiGenerate() {
+  const currentMode = document.querySelector('.mode-btn.active')?.dataset.mode || 'img2img';
+  if (currentMode !== 'ai-generate') { toast('请切换到「AI智能生成」模式','err'); return; }
+
+  const prompt = document.getElementById('chatInput').value.trim();
+  if (!prompt) { toast('请输入描述','err'); return; }
+  const anyStillUploading = uploading.some(Boolean);
+  if (anyStillUploading) { toast('⏳ 图片上传中,请稍后再点生成','err'); return; }
+  const uploadedImgs = imgs.filter(Boolean);
+  if (!uploadedImgs.length) { toast('请至少上传一张参考图','err'); return; }
+
+  const angleCount = parseInt(document.getElementById('aiAngleCount').value, 10);
+  const size = document.getElementById('sizeSelect').value;
+  const quality = document.getElementById('qualitySelect').value;
+
+  addMsg('user', '🧠 '+prompt, uploadedImgs);
+
+  const g = document.getElementById('results');
+  const em = g.querySelector('.empty');
+  if (em) em.remove();
+
+  const taskId = 'ai_task_' + (++taskIdCounter);
+  const now = Date.now();
+  const card = document.createElement('div');
+  card.className = 'rcard pending';
+  card.id = taskId;
+  card.innerHTML = '<div class="rcard-thumb"><div class="pending-content"><div class="spinner"></div><div class="pending-label">🧠 AI 意图理解中...</div><div class="timer-display" id="'+taskId+'_timer">00:00</div><div class="timer-ms" id="'+taskId+'_ms">0.0s</div></div></div><div class="rinfo"><div class="rprompt">'+prompt+'</div><div class="rtime">🧠 AI多角度生成 · '+angleCount+'张图</div></div>';
+  g.insertBefore(card, g.firstChild);
+  updateTaskCounts();
+
+  const timerInterval = setInterval(() => {
+    const elapsed = Date.now() - now;
+    const sec = Math.floor(elapsed / 1000);
+    const min = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (timerEl) timerEl.textContent = String(min).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  }, 1000);
+  const timerEl = document.getElementById(taskId + '_timer');
+
+  tasks[taskId] = { startTime: now, timerInterval, card, prompt, status: 'ai_pending', angleCount: angleCount };
+
+  try {
+    // 提交任务，获取 task_id（异步模式）
+    const res = await fetch('/api/multi-angle-generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
+      body: JSON.stringify({ prompt, images: uploadedImgs, angleCount, size, quality })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(()=>({}));
+      throw new Error(errData.error || '请求失败: '+res.status);
+    }
+
+    const d = await res.json();
+    const serverTaskId = d.task_id;
+    const localId = d.localId;
+
+    // 后台轮询任务状态
+    await pollAiMultiAngleTask(taskId, serverTaskId, angleCount, prompt, size, quality);
+
+  } catch(e) {
+    clearInterval(timerInterval);
+    const failCard = document.getElementById(taskId);
+    if (failCard) { failCard.className = 'rcard failed'; failCard.querySelector('.rcard-thumb').innerHTML = '<div class="pending-content"><div style="font-size:32px;margin-bottom:8px;">❌</div><div style="font-size:12px;color:var(--danger);font-weight:600;margin-bottom:4px;">AI 生成失败</div><div style="font-size:10px;color:var(--text2);max-width:200px;word-break:break-word;">'+e.message+'</div></div>'; }
+    addMsg('ai', '❌ '+e.message);
+    toast('AI生成失败: '+e.message,'err');
+  }
+}
+
+// AI多角度任务轮询（异步模式专用）
+async function pollAiMultiAngleTask(localTaskId, serverTaskId, angleCount, prompt, size, quality) {
+  const maxAttempts = 120; // 10 minutes
+  const pollInterval = 5000;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+    // Check if user removed the card
+    const task = tasks[localTaskId];
+    if (!task || !task.card || !document.getElementById(localTaskId)) {
+      console.log('[ai-poll] task card removed, stopping poll');
+      return;
+    }
+
+    try {
+      const d = await api(`/api/task-status?task_id=${encodeURIComponent(serverTaskId)}`);
+
+      if (d.status === 'success' && d.resultUrls && d.resultUrls.length > 0) {
+        // Task completed
+        if (task.timerInterval) clearInterval(task.timerInterval);
+
+        const elapsedSec = ((Date.now() - task.startTime) / 1000).toFixed(1);
+        const resultCount = d.resultUrls.length;
+
+        // Update card to success
+        const card = document.getElementById(localTaskId);
+        if (card) {
+          card.className = 'rcard success';
+          let thumbsHtml = '';
+          for (const url of d.resultUrls) {
+            thumbsHtml += `<div class="rcard-thumb"><img src="${url}" alt="生成图片" loading="lazy"><div class="rcard-actions"><button onclick="saveImg('${url}')" title="保存">💾</button><button onclick="downloadDirect('${url}')" title="下载">⬇️</button></div></div>`;
+          }
+          card.querySelector('.rcard-thumb').outerHTML = '<div class="multi-thumbs">' + thumbsHtml + '</div>';
+          if (card.querySelector('.rinfo .rtime')) {
+            card.querySelector('.rinfo .rtime').textContent = `🧠 AI多角度生成 · ${resultCount}/${angleCount}张成功 · ${elapsedSec}s`;
+          }
+        }
+
+        // Save to history
+        saveToHistory({
+          id: 'hist_' + Date.now(),
+          imageUrl: d.resultUrls[0],
+          prompt: prompt,
+          model: 'gpt-image-2-sub2-multi-angle',
+          size: size,
+          quality: quality,
+          duration: parseFloat(elapsedSec),
+          status: 'success'
+        });
+
+        addMsg('ai', `🧠 AI 多角度生成完成！${resultCount}/${angleCount}张，用时 ${elapsedSec}s`, d.resultUrls);
+        toast('AI 多角度生成完成！ ('+resultCount+'/'+angleCount+'张)', 'ok');
+        loadUserBalance();
+        return;
+      } else if (d.status === 'error') {
+        // Task failed
+        if (task.timerInterval) clearInterval(task.timerInterval);
+        failTask(localTaskId, d.error || 'AI生成任务失败');
+        addMsg('ai', '❌ ' + (d.error || 'AI生成任务失败'));
+        toast('AI生成失败: ' + (d.error || '任务失败'), 'err');
+        return;
+      } else if (d.status === 'not_found') {
+        // Task not found
+        if (task.timerInterval) clearInterval(task.timerInterval);
+        failTask(localTaskId, '任务记录丢失,请重试');
+        addMsg('ai', '❌ 任务记录丢失');
+        toast('任务记录丢失,请重试', 'err');
+        return;
+      }
+      // else still pending, update timer display
+      const elapsedSec = Math.floor((Date.now() - task.startTime) / 1000);
+      const min = Math.floor(elapsedSec / 60);
+      const sec = elapsedSec % 60;
+      const timerEl = document.getElementById(localTaskId + '_timer');
+      if (timerEl) timerEl.textContent = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+
+      // Update pending label based on time
+      const card = document.getElementById(localTaskId);
+      if (card && card.querySelector('.pending-label')) {
+        if (i > 12) {
+          card.querySelector('.pending-label').textContent = '🎨 图片生成中...';
+        } else if (i > 3) {
+          card.querySelector('.pending-label').textContent = '🧠 AI 分析参考图中...';
+        }
+      }
+    } catch(e) {
+      console.log('[ai-poll] error:', e.message);
+    }
+  }
+
+  // Timeout
+  const task = tasks[localTaskId];
+  if (task && task.timerInterval) clearInterval(task.timerInterval);
+  failTask(localTaskId, 'AI生成任务超时,请重试');
+  addMsg('ai', '❌ 任务超时');
+  toast('生成超时', 'err');
+}
+
+// SSE 事件处理器
+function handleSseEvent(data, card, taskId, timerEl, startTime, angles, allResults) {
+  if (data.type === 'analysis_complete') {
+    angles = data.angles;
+    const cardEl = document.getElementById(taskId);
+    if (cardEl) {
+      cardEl.querySelector('.pending-label').textContent = '✅ AI分析完成，开始生成图片...';
+      cardEl.querySelector('.rinfo .rtime').textContent = '🧠 AI多角度生成 · '+angles.length+'张图';
+    }
+    addMsg('ai', '🧠 AI 分析完成！识别出'+angles.length+'个角度：'+angles.map(a=>a.angle).join('、'));
+  }
+  else if (data.type === 'image_complete') {
+    allResults.push(data);
+    addMsg('ai', `✅ ${data.angle} 生成完成`, null, data.imageUrl);
+  }
+  else if (data.type === 'done') {
+    clearInterval(tasks[taskId]?.timerInterval);
+    const cardEl = document.getElementById(taskId);
+    if (cardEl) {
+      cardEl.className = 'rcard success';
+      cardEl.querySelector('.rcard-thumb').innerHTML = '<div style="padding:20px;text-align:center;"><div style="font-size:48px;margin-bottom:10px;">✅</div><div style="font-size:12px;color:var(--success);">全部生成完成</div><div style="font-size:11px;color:var(--text2);margin-top:8px;">请查看下方结果</div></div>';
+    }
+    tasks[taskId] = { ...tasks[taskId], status: 'done', result: allResults };
+  }
+  else if (data.type === 'error') {
+    card.querySelector('.pending-label').textContent = '❌ '+data.error;
+    throw new Error(data.error);
+  }
+}
+
+function showMultiAngleResults(parentTaskId, results) {
+  const g = document.getElementById('results');
+  const gridContainer = document.createElement('div');
+  gridContainer.className = 'rcard';
+  gridContainer.style.padding = '6px';
+  gridContainer.style.marginTop = '8px';
+  gridContainer.style.background = 'var(--bg3)';
+  gridContainer.innerHTML = '<div style="font-size:10px;color:var(--text2);margin-bottom:6px;padding:4px 8px;background:var(--bg4);border-radius:6px;">生成结果网格</div>';
+  const grid = document.createElement('div');
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(120px, 1fr))';
+  grid.style.gap = '6px';
+  gridContainer.appendChild(grid);
+  g.appendChild(grid);
+
+  results.forEach(function(r, idx) {
+    const angleName = r.angle || '角度'+(idx + 1);
+    const imgEl = document.createElement('div');
+    imgEl.style.position = 'relative';
+    imgEl.style.borderRadius = '8px';
+    imgEl.style.overflow = 'hidden';
+    imgEl.style.cursor = 'pointer';
+    imgEl.onclick = function() { window.open(r.imageUrl, '_blank'); };
+    imgEl.innerHTML = '<div style="aspect-ratio:1;overflow:hidden;background:var(--bg4)"><img src="'+r.imageUrl+'" style="width:100%;height:100%;object-fit:contain;"></div><div style="padding:4px 6px;text-align:center;font-size:10px;color:var(--text);background:var(--bg3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+angleName+'</div><div style="position:absolute;top:2px;right:2px;padding:2px 6px;background:rgba(0,0,0,0.6);border-radius:4px;font-size:9px;color:white;">Sub2</div>';
+    grid.appendChild(imgEl);
+  });
+}
+
+// ===== AI 智能生成 (新两阶段流程 - 2026-05-23) =====
+// 原方案：使用 /intent-image-tasks SSE 流式（废弃）
+// 新方案：阶段一 /api/ai-analyze + 阶段二 /api/ai-generate
+
+let currentAnalysisTaskId = null; // 当前分析任务 ID
+
+// ===== GPT-5.5 意图分析 =====
+async function aiAnalyze() {
+  const currentMode = document.querySelector('.mode-btn.active')?.dataset.mode || 'img2img';
+  if (currentMode !== 'ai-generate') { toast('请切换到「AI智能生成」模式','err'); return; }
+
+  const prompt = document.getElementById('chatInput').value.trim();
+  if (!prompt) { toast('请输入描述','err'); return; }
+  const anyStillUploading = uploading.some(Boolean);
+  if (anyStillUploading) { toast('⏳ 图片上传中,请稍后再点生成','err'); return; }
+  const uploadedImgs = imgs.filter(Boolean);
+  if (!uploadedImgs.length) { toast('请至少上传一张参考图','err'); return; }
+
+  const size = document.getElementById('sizeSelect').value;
+  const quality = document.getElementById('qualitySelect').value;
+
+  addMsg('user', '🧠 AI意图理解中...', uploadedImgs);
+
+  const g = document.getElementById('results');
+  const em = g.querySelector('.empty');
+  if (em) em.remove();
+
+  const card = document.createElement('div');
+  card.className = 'rcard pending';
+  card.innerHTML = '<div class="rcard-thumb"><div class="pending-content"><div class="spinner"></div><div class="pending-label">🧠 AI 分析参考图中...</div></div></div><div class="rinfo"><div class="rprompt">'+prompt+'</div><div class="rtime">⏳ GPT-5.5 意图分析中...</div></div>';
+  g.insertBefore(card, g.firstChild);
+  updateTaskCounts();
+
+  try {
+    const res = await fetch('/api/ai-analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
+      body: JSON.stringify({ prompt, images: uploadedImgs })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(()=>({}));
+      throw new Error(errData.error || '请求失败: '+res.status);
+    }
+
+    const d = await res.json();
+    currentAnalysisTaskId = d.taskId;
+
+    // 显示分析结果和 prompt 方案
+    showAnalysisResults(card, d);
+
+  } catch(e) {
+    const failCard = card;
+    if (failCard) {
+      failCard.className = 'rcard failed';
+      failCard.querySelector('.rcard-thumb').innerHTML = '<div class="pending-content"><div style="font-size:32px;margin-bottom:8px;">❌</div><div style="font-size:12px;color:var(--danger);font-weight:600;margin-bottom:4px;">AI 分析失败</div><div style="font-size:10px;color:var(--text2);max-width:200px;">'+e.message+'</div></div>';
+    }
+    addMsg('ai', '❌ '+e.message);
+    toast('AI生成失败: '+e.message,'err');
+  }
+}
+
+// 显示分析结果
+function showAnalysisResults(analysisCard, analysisData) {
+  analysisCard.remove();
+
+  const g = document.getElementById('results');
+  const em = g.querySelector('.empty');
+  if (em) em.remove();
+
+  const card = document.createElement('div');
+  card.className = 'rcard';
+  card.id = 'analysis_results';
+  card.innerHTML = `
+    <div class="rcard-thumb" style="flex:1;"><div style="font-size:24px;margin-bottom:8px;">💡</div></div>
+    <div class="rinfo">
+      <div class="rprompt">🧠 AI 意图分析完成</div>
+      <div class="rtime">${analysisData.summary || ''}</div>
+      <div class="rtextarea" style="margin:8px 0;">
+        <label style="font-size:12px;display:block;margin-bottom:4px;">提示词方案（可编辑）：</label>
+        <div id="ai-variants-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+      <div class="rbtns" style="justify-content:flex-end;">
+        <button class="rbtn genbtn" onclick="aiConfirmAndGenerate()" style="background:linear-gradient(135deg,#667eea 0,#764ba2 100%);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">🚀 确认生成</button>
+        <button class="rbtn" onclick="refreshAnalysis()" style="background:#f5f5f5;border:1px solid #ddd;padding:8px 16px;border-radius:6px;cursor:pointer;">🔄 重新分析</button>
+      </div>
+    </div>
+  `;
+  g.insertBefore(card, g.firstChild);
+
+  const list = document.getElementById('ai-variants-list');
+  const variants = analysisData.variants || [];
+  variants.forEach((v, idx) => {
+    const item = document.createElement('div');
+    item.className = 'variant-item';
+    item.innerHTML = `
+      <div style="display:flex;gap:8px;">
+        <span style="font-size:10px;color:#999;width:60px;">${v.title || '方案'+(idx+1)}</span>
+        <textarea style="flex:1;max-width:600px;height:60px;padding:8px;font-size:12px;font-family:inherit;border:1px solid #ddd;border-radius:4px;" placeholder="可编辑此提示词">${v.prompt || ''}</textarea>
+      </div>
+      <div style="font-size:11px;color:#666;margin-left:66px;">${v.angle || ''}</div>
+    `;
+    list.appendChild(item);
+  });
+
+  updateTaskCounts();
+}
+
+// 重新分析
+function refreshAnalysis() {
+  currentAnalysisTaskId = null;
+  const card = document.getElementById('analysis_results');
+  if (card) card.remove();
+}
+
+// 确认并生成
+async function aiConfirmAndGenerate() {
+  const variantsEl = document.getElementById('ai-variants-list');
+  if (!variantsEl) { toast('请先完成 AI 意图分析','err'); return; }
+
+  const items = Array.from(variantsEl.querySelectorAll('.variant-item'));
+  const prompts = items.map(item => {
+    const textarea = item.querySelector('textarea');
+    return {
+      prompt: textarea.value.trim(),
+      angle: item.querySelector('div:last-child').textContent
+    };
+  }).filter(p => p.prompt);
+
+  if (prompts.length === 0) { toast('请至少输入一个提示词','err'); return; }
+
+  const card = document.getElementById('analysis_results');
+  if (card) {
+    card.className = 'rcard pending';
+    card.querySelector('.rcard-thumb').innerHTML = '<div class="pending-content"><div class="spinner"></div><div class="pending-label">🚀 并发生成中...</div></div>';
+    card.querySelector('.rinfo .rtime').textContent = '⏳ 正在提交 '+prompts.length+' 个任务到 Sub2...';
+  }
+
+  const size = document.getElementById('sizeSelect').value;
+  const quality = document.getElementById('qualitySelect').value;
+
+  try {
+    const res = await fetch('/api/ai-generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
+      body: JSON.stringify({ analysisTaskId: currentAnalysisTaskId, prompts, size, quality })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(()=>({}));
+      throw new Error(errData.error || '请求失败: '+res.status);
+    }
+
+    const d = await res.json();
+    addMsg('ai', `✅ 任务已提交: ${d.total} 个任务正在后台生成...`);
+
+    d.results.forEach((r, idx) => {
+      if (r.status === 'pending' || r.status === 'error') {
+        showAiGenTaskCard(idx, r, prompts[idx]?.prompt || '方案'+(idx+1));
+      }
+    });
+
+    pollAllAiTasks(d.results).catch(err => console.log('pollAllAiTasks error:', err));
+
+  } catch(e) {
+    if (card) {
+      card.className = 'rcard failed';
+      card.querySelector('.rcard-thumb').innerHTML = '<div class="pending-content"><div style="font-size:32px;">❌</div><div style="font-size:12px;">生成失败</div></div>';
+    }
+    addMsg('ai', '❌ '+e.message);
+    toast('AI生成失败: '+e.message,'err');
+  }
+}
+
+// 显示单个任务卡片
+function showAiGenTaskCard(idx, taskData, prompt) {
+  if (!currentAnalysisTaskId) return;
+
+  const g = document.getElementById('results');
+  const em = g.querySelector('.empty');
+  if (em) em.remove();
+
+  const taskId = `ai_task_${taskData.taskId || idx}`;
+  const card = document.createElement('div');
+  card.className = 'rcard pending';
+  card.id = taskId;
+  card.innerHTML = `
+    <div class="rcard-thumb">
+      <div class="pending-content">
+        <div class="spinner"></div>
+        <div class="pending-label">生成中...</div>
+        <div class="timer-display" id="${taskId}_timer">00:00</div>
+      </div>
+    </div>
+    <div class="rinfo">
+      <div class="rprompt">${prompt.substring(0, 50)}...</div>
+      <div class="rtime">⏳ 图片 ${idx + 1}/${taskData.total || prompts.length}...</div>
+    </div>
+  `;
+  g.insertBefore(card, g.firstChild);
+
+  tasks[taskId] = {
+    startTime: Date.now(),
+    timerInterval: setInterval(() => {
+      const elapsed = Date.now() - tasks[taskId].startTime;
+      const sec = Math.floor(elapsed / 1000);
+      const min = Math.floor(sec / 60);
+      const s = sec % 60;
+      const timerEl = document.getElementById(taskId + '_timer');
+      if (timerEl) timerEl.textContent = String(min).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    }, 1000),
+    card,
+    prompt,
+    apiRequestId: taskData.taskId,
+    status: 'pending'
+  };
+
+  updateTaskCounts();
+}
+
+// 轮询所有 AI 生成任务
+async function pollAllAiTasks(results) {
+  const pollInterval = 5000;
+  const maxAttempts = 120;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+    let allDone = true;
+    for (const r of results) {
+      if (r.status === 'pending') {
+        try {
+          const d = await api(`/api/task-status?task_id=${encodeURIComponent(r.taskId)}`);
+          if (d.status === 'success' && d.resultUrls && d.resultUrls.length > 0) {
+            completeAiGenTask(r.taskId, d.resultUrls[0]);
+            addMsg('ai', `✅ 图片 ${d.angleLabel || '完成'} 生成成功!`, null, d.resultUrls[0]);
+          } else if (d.status === 'error') {
+            failAiGenTask(r.taskId, d.error || '生成失败');
+          } else if (d.status === 'not_found') {
+            failAiGenTask(r.taskId, '任务记录丢失');
+          } else {
+            allDone = false;
+          }
+        } catch(e) {
+          console.log('[poll]', e.message);
+        }
+      }
+    }
+
+    if (allDone) break;
+  }
+}
+
+// 完成 AI 生成任务
+function completeAiGenTask(taskId, imageUrl) {
+  const task = tasks[taskId];
+  if (!task) return;
+  clearInterval(task.timerInterval);
+
+  const card = task.card;
+  if (card) {
+    card.className = 'rcard success';
+    card.querySelector('.rcard-thumb').innerHTML = `
+      <img src="${imageUrl}" loading="lazy">
+      <div class="rcard-actions">
+        <button onclick="saveImg('${imageUrl}')">💾</button>
+        <button onclick="downloadDirect('${imageUrl}')">⬇️</button>
+      </div>
+    `;
+    card.querySelector('.rinfo .rtime').textContent = '✅ 生成成功';
+  }
+  delete tasks[taskId];
+
+  const remain = Object.values(tasks).filter(t => t.status === 'pending').length;
+  if (remain === 0) {
+    toast('所有图片生成完成！','ok');
+    loadUserBalance();
+  }
+}
+
+// 失败 AI 生成任务
+function failAiGenTask(taskId, errorMsg) {
+  const task = tasks[taskId];
+  if (!task) return;
+  clearInterval(task.timerInterval);
+
+  const card = task.card;
+  if (card) {
+    card.className = 'rcard failed';
+    card.querySelector('.rcard-thumb').innerHTML = `
+      <div class="pending-content">
+        <div style="font-size:32px;">❌</div>
+        <div style="font-size:12px;color:var(--danger);font-weight:600;">生成失败</div>
+        <div style="font-size:10px;color:var(--text2);max-width:200px;">${errorMsg}</div>
+      </div>
+    `;
+    card.querySelector('.rinfo .rtime').textContent = '❌ 失败';
+  }
+  delete tasks[taskId];
+}
+
+// ===== Recharge Modal =====
+let rechargeTargetUser = '';
+function showRechargeModal(u) { rechargeTargetUser = u; document.getElementById('rechargeOverlay').classList.add('show'); document.getElementById('rechargeUser').textContent = u; document.getElementById('rechargeAmount').value=''; document.getElementById('rechargeErr').style.display='none'; }
+function closeRechargeModal() { document.getElementById('rechargeOverlay').classList.remove('show'); }
+async function doRecharge() {
+  const amount = document.getElementById('rechargeAmount').value;
+  const errEl = document.getElementById('rechargeErr');
+  if(!amount || isNaN(parseFloat(amount)) || parseFloat(amount) === 0) { errEl.textContent='请输入有效金额'; errEl.style.display='block'; return; }
+  try {
+    const d = await api(`/api/admin/users/${rechargeTargetUser}/recharge`, { method:'POST', body: JSON.stringify({ amount }) });
+    closeRechargeModal();
+    const a = parseFloat(amount);
+    toast(`${a > 0 ? '充值' : '扣款'} ¥${Math.abs(a).toFixed(2)},余额 ¥${d.balance.toFixed(2)}`,'ok');
+    loadAdminUsers();
+  } catch(e) { errEl.textContent=e.message; errEl.style.display='block'; }
+}
+
+// ===== Toggle User =====
+async function doToggleUser(u) {
+  try {
+    const d = await api(`/api/admin/users/${u}/toggle`, { method:'POST', body: '{}' });
+    toast(d.enabled ? `已启用 ${u}` : `已禁用 ${u}`, 'ok');
+    loadAdminUsers();
+  } catch(e) { toast('操作失败: '+e.message, 'err'); }
+}
+
+// ===== User Logs Modal =====
+async function showUserLogs(u) {
+  document.getElementById('userLogsOverlay').classList.add('show');
+  document.getElementById('logsUser').textContent = u;
+  try {
+    const d = await api(`/api/admin/users/${u}/logs`);
+    const list = document.getElementById('userLogsList');
+    let html = '';
+
+    // Recharge logs section
+    const rcLogs = d.rechargeLogs || [];
+    html += '<h3 style="font-size:14px;color:var(--text2);margin:0 0 12px;">💰 充值记录</h3>';
+    if (rcLogs.length === 0) {
+      html += '<div style="text-align:center;padding:16px;color:var(--text2);font-size:12px;">暂无充值记录</div>';
+    } else {
+      rcLogs.forEach(r => {
+        const time = new Date(r.createdAt).toLocaleString('zh-CN');
+        const amtClass = r.amount > 0 ? 'badge-enabled' : 'badge-disabled';
+        const amtLabel = r.amount > 0 ? `+¥${r.amount.toFixed(2)}` : `-¥${Math.abs(r.amount).toFixed(2)}`;
+        html += `<div class="log-entry">
+          <div class="log-header"><span class="log-time">${time}</span><span class="${amtClass}">${amtLabel}</span><span style="font-size:11px;color:var(--text2);">操作人: ${r.operator||'admin'}</span></div>
+          <div class="log-meta"><span>操作前: ¥${(r.oldBalance||0).toFixed(2)}</span><span>操作后: ¥${(r.newBalance||0).toFixed(2)}</span></div>
+        </div>`;
+      });
+    }
+
+    // Generation logs section
+    html += '<h3 style="font-size:14px;color:var(--text2);margin:20px 0 12px;">🎨 生图记录</h3>';
+    if(!d.history || d.history.length === 0) {
+      html += '<div style="text-align:center;padding:16px;color:var(--text2);font-size:12px;">暂无生图记录</div>';
+    } else {
+      html += d.history.map(h => {
+        const time = new Date(h.createdAt).toLocaleString('zh-CN');
+        const statusLabel = h.status === 'success' ? '<span class="badge-enabled">成功</span>' : h.status === 'failed' ? '<span class="badge-disabled">失败</span>' : '<span style="color:var(--warn);font-size:12px;">处理中</span>';
+        const imgHtml = h.status === 'success' && h.imageUrl
+          ? `<img class="log-img" src="${h.imageUrl}" onerror="this.style.display='none'">`
+          : '';
+        return `<div class="log-entry">
+          <div class="log-header"><span class="log-time">${time}</span>${statusLabel}<span class="log-model">${formatModel(h.model)}</span></div>
+          <div class="log-prompt">${escHTML(h.prompt||'')}</div>
+          <div class="log-meta"><span>尺寸: ${h.size||'auto'}</span><span>画质: ${h.quality||'auto'}</span><span>耗时: ${h.duration?h.duration+'s':'-'}</span></div>
+          ${imgHtml}
+        </div>`;
+      }).join('');
+    }
+    list.innerHTML = html;
+  } catch(e) { document.getElementById('userLogsList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">加载失败: '+e.message+'</div>'; }
+}
+function closeUserLogsModal() { document.getElementById('userLogsOverlay').classList.remove('show'); }
+
+async function init() {
+  if(token) { try { const d=await api('/api/me'); currentUser={username:d.username,role:d.role}; showApp(); loadHistory(); } catch(e) { token=null; localStorage.removeItem('token'); showLogin(); } } else { showLogin(); }
+  updatePriceLabel();
+}
+init();
+
+// Close modals on overlay click
+document.getElementById('addUserOverlay').addEventListener('click', function(e) { if(e.target===this) closeAddUserModal(); });
+document.getElementById('rechargeOverlay').addEventListener('click', function(e) { if(e.target===this) closeRechargeModal(); });
+document.getElementById('userLogsOverlay').addEventListener('click', function(e) { if(e.target===this) closeUserLogsModal(); });
+
+
+</script>
+</body>
+</html>
